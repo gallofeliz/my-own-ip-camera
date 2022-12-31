@@ -1,0 +1,13 @@
+version: "3.5"
+
+services:
+  rtsp:
+    restart: unless-stopped
+    image: aler9/rtsp-simple-server:latest-rpi
+    #user: nobody
+    network_mode: host
+    privileged: true
+    tmpfs: /dev/shm:exec
+    volumes:
+      - /run/udev:/run/udev:ro
+      - ./rtsp-simple-server.yml:/rtsp-simple-server.yml:ro
