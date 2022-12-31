@@ -14,3 +14,4 @@ paths:
   #  rpiCameraMode: 778:432 
 
 rtspAddress: :554
+api: true
