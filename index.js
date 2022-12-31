@@ -18,7 +18,7 @@ const server = new HttpServer({
                     res.header('Content-Type: image/jpeg')
                     await runProcess({
                         cmd: 'ffmpeg',
-                        args: ['-i', 'http://localhost:8888/fhd/stream.m3u8', '-f', 'image2', '-vframes', '1', '-'],
+                        args: ['-i', 'http://localhost:8888/fhd/stream.m3u8', '-ss', '00:00:01.500', '-f', 'image2', '-frames:v', '1', '-'],
                         logger,
                         outputStream: res
                     }, true)
