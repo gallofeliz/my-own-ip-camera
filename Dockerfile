@@ -1,6 +1,13 @@
-FROM node:lts-alpine
+FROM balenalib/raspberrypi3:bullseye-run
 
-RUN apk add --no-cache tzdata ffmpeg git
+RUN apt-get update
+RUN apt-get install -y libcamera-apps-lite 
+RUN apt-get install -y ffmpeg
+RUN apt-get install -y git
+RUN apt-get install -y npm
+#FROM node:lts-alpine
+
+#RUN apk add --no-cache tzdata ffmpeg git
 
 WORKDIR /app
 
