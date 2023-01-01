@@ -5,6 +5,10 @@ services:
     build:
       context: .
     network_mode: host
+    privileged: true
+    tmpfs: /dev/shm:exec
+    volumes:
+      - /run/udev:/run/udev:ro
   rtsp:
     restart: unless-stopped
     image: aler9/rtsp-simple-server:latest-rpi

@@ -13,6 +13,9 @@ WORKDIR /app
 
 ADD package.json package-lock.json ./
 RUN npm i
+
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs
+
 ADD index.js ./
 
 #USER nobody

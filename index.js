@@ -18,7 +18,7 @@ const server = new HttpServer({
                     res.header('Content-Type: image/jpeg')
                     await runProcess({
                         cmd: 'libcamera-jpeg',
-                        args: ['-n', '-o', '-'],
+                        args: ['--mode', '1920:1080', '--width', '1920', '--height', '1080', '--hflip', '1', '--vflip', '1', '-n', '-o', '-'],
                         logger,
                         outputStream: res
                     }, true)
