@@ -13,7 +13,20 @@ const server = new HttpServer({
         routes: [
             {
                 method: 'GET',
-                path: '/fhd',
+                path: '/fhd1',
+                async handler(req, res) {
+                    res.header('Content-Type: image/jpeg')
+                    await runProcess({
+                        cmd: 'libcamera-jpeg',
+                        args: ['-n', '-o', '-'],
+                        logger,
+                        outputStream: res
+                    }, true)
+                }
+            },
+            {
+                method: 'GET',
+                path: '/fhd2',
                 async handler(req, res) {
                     res.header('Content-Type: image/jpeg')
                     await runProcess({
