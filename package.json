@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/gallofeliz/raspberry-camera-ip#readme",
   "dependencies": {
-    "@gallofeliz/js-libs": "github:gallofeliz/js-libs"
+    "@gallofeliz/js-libs": "https://github.com/gallofeliz/js-libs/releases/download/v0.2.0/gallofeliz-js-libs-0.2.0.tgz"
   }
 }

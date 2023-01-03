@@ -18,24 +18,23 @@ const server = new HttpServer({
                 async handler(req, res) {
                     res.header('Content-Type: image/jpeg')
 
-                    const camAlreadyUsedByVideoServer = (await httpRequest({
+                    const camAlreadyUsedByVideoServer = await httpRequest({
                         url: 'http://127.0.0.1:9997/v1/paths/list',
                         outputType: 'json',
-                        logger
-                    })).items.fhd.sourceReady
+                        logger,
+                        responseTransformation: 'items.fhd.sourceReady'
+                    })
 
                     if (camAlreadyUsedByVideoServer) {
                         return await runProcess({
-                            cmd: 'ffmpeg',
-                            args: ['-i', 'http://localhost:8888/fhd/stream.m3u8', '-ss', '00:00:01.500', '-f', 'image2', '-frames:v', '1', '-'],
+                            command: ['ffmpeg', '-i', 'http://localhost:8888/fhd/stream.m3u8', '-ss', '00:00:01.500', '-f', 'image2', '-frames:v', '1', '-'],
                             logger,
                             outputStream: res
                         }, true)
                     }
 
                     await runProcess({
-                        cmd: 'libcamera-jpeg',
-                        args: ['--mode', '1920:1080', '--width', '1920', '--height', '1080', '--hflip', '1', '--vflip', '1', '-n', '-o', '-'],
+                        command: ['libcamera-jpeg', '--mode', '1920:1080', '--width', '1920', '--height', '1080', '--hflip', '1', '--vflip', '1', '-n', '-o', '-'],
                         logger,
                         outputStream: res
                     }, true)

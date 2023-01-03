@@ -1,10 +1,7 @@
 FROM balenalib/raspberrypi3:bullseye-run
 
-RUN apt-get update
-RUN apt-get install -y libcamera-apps-lite 
-RUN apt-get install -y ffmpeg
-RUN apt-get install -y git
-RUN apt-get install -y npm
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+	&& apt-get install -y nodejs libcamera-apps-lite ffmpeg git
 #FROM node:lts-alpine
 
 #RUN apk add --no-cache tzdata ffmpeg git
@@ -12,9 +9,8 @@ RUN apt-get install -y npm
 WORKDIR /app
 
 ADD package.json package-lock.json ./
-RUN npm i
 
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && apt-get install -y nodejs
+RUN npm i
 
 ADD index.js ./
 
