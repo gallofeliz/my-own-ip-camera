@@ -20,5 +20,5 @@ ADD index.js ./
 
 #USER nobody
 
-CMD node index.js
+CMD ["node", "index.js"]
 #CMD ls -la node_modules
