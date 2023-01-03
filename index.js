@@ -19,7 +19,7 @@ const server = new HttpServer({
                     res.header('Content-Type: image/jpeg')
 
                     const camAlreadyUsedByVideoServer = (await httpRequest({
-                        url: 'http://localhost:9997/v1/paths/list',
+                        url: 'http://127.0.0.1:9997/v1/paths/list',
                         outputType: 'json',
                         logger
                     })).items.fhd.sourceReady
