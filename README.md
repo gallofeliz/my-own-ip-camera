@@ -19,13 +19,16 @@ Currently Raspberry PI is supported. We can easily isolate the services and have
 
 ## Why not next
 
+- Empty config for rtsp service, the main service will setup and update it (needed for next)
+- Endpoint to reverse camera (flip)
 - Improve image snapshot performances (reduce time)
 - Various sizing for images (and videos ?)
 - Main endpoint to access to URLS, and make actions
-- Endpoint to reverse camera (flip)
 - State save for flip and others configs
 - Add time/date in frames
 - Add Onvif endpoint
+  - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
+  - https://www.happytimesoft.com/products/onvif-server/index.html
 - Close camera on idle or requested with servo motor
 - Detect with accelemeter (or similar) camera position and ajust auto flip
 - Add audio
