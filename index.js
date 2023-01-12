@@ -10,6 +10,7 @@ const logger = createLogger('info')
 const server = new HttpServer({
     port: 80,
     logger,
+    webUiFilesPath: 'ui',
     api: {
         routes: [
             {
@@ -18,7 +19,7 @@ const server = new HttpServer({
                 inputBodySchema: { enum: ['open', 'closed'] },
                 async handler(req, res) {
                     const openValue = 12.5
-                    const closedValue = 2
+                    const closedValue = 2.5
                     const expected = req.body
 
                     await runProcess({

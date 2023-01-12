@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>My Own Ip Camera</title>
+	<style type="text/css">
+		li {
+			margin: 5px;
+		}
+	</style>
+</head>
+<body>
+	<h1>My Own Ip Camera</h1>
+	<ul>
+		<li><a href="fhd.jpg">JPG Picture</a></li>
+		<li><a href="//localhost:8888/fhd">HLS video</a></li>
+		<li><a href="rtsp://localhost/fhd">RTSP video</a></li>
+		<li><a href="rtmp://localhost/fhd">RTMP video</a></li>
+		<li><button onclick="shutter(true)">Open Shutter</li>
+		<li><button onclick="shutter(false)">Close Shutter</li>
+	</ul>
+
+	<script type="text/javascript">
+		document.querySelectorAll('a').forEach(a => a.href = a.href.replace('localhost', location.hostname))
+
+		async function shutter(value) {
+			value = value ? 'open' : 'closed'
+			try {
+				const e = await fetch('shutter', {
+					method: 'POST',
+					body: JSON.stringify(value),
+					headers: { 'Content-Type': 'application/json' }
+				})
+
+				if (!e.ok) {
+					throw new Error('Error')
+				}
+			} catch (e) {
+				alert('Error')
+			}
+		}
+	</script>
+</body>
+</html>

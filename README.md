@@ -14,6 +14,7 @@ Currently Raspberry PI is supported. We can easily isolate the services and have
 
 ## Features
 
+- Go to http://camHostOrIP/ to have URLS and actions
 - Video (one size) RTSP + HLS + RTMP "on demand"
 - Image directly from camera if possible else from video stream
 
@@ -23,7 +24,6 @@ Currently Raspberry PI is supported. We can easily isolate the services and have
 - Endpoint to reverse camera (flip)
 - Improve image snapshot performances (reduce time)
 - Various sizing for images (and videos ?)
-- Main endpoint to access to URLS, and make actions
 - State save for flip and others configs
 - Add time/date in frames
 - Add Onvif endpoint
