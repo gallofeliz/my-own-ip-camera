@@ -2,6 +2,9 @@ FROM balenalib/raspberrypi3:bullseye-run
 
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
 	&& apt-get install -y nodejs libcamera-apps-lite ffmpeg git
+
+RUN pip3 install RPi.GPIO
+
 #FROM node:lts-alpine
 
 #RUN apk add --no-cache tzdata ffmpeg git
@@ -12,7 +15,7 @@ ADD package.json package-lock.json ./
 
 RUN npm i
 
-ADD index.js ./
+ADD index.js shutter.py ./
 
 #USER nobody
 

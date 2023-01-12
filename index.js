@@ -8,10 +8,30 @@ const httpRequest = require('@gallofeliz/js-libs/http-request').default
 const logger = createLogger('info')
 
 const server = new HttpServer({
-    port: 8080,
+    port: 80,
     logger,
     api: {
         routes: [
+            {
+                method: 'POST',
+                path: '/shutter',
+                inputBodySchema: { enum: ['open', 'closed'] },
+                async handler(req, res) {
+                    const openValue = 12.5
+                    const closedValue = 2
+                    const expected = req.body
+
+                    await runProcess({
+                        command: [
+                            './shutter.py',
+                            expected === 'open' ? openValue : closedValue
+                        ],
+                        logger
+                    }, true)
+
+                    res.status(201).end()
+                }
+            },
             {
                 method: 'GET',
                 path: '/fhd.jpg',
@@ -46,7 +66,7 @@ const server = new HttpServer({
 
 server.start()
 
- handleExitSignals(() => {
+handleExitSignals(() => {
     logger.info('bye bye')
     server.stop()
 })
