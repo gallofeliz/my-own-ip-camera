@@ -24,7 +24,7 @@ Currently Raspberry PI with its camera is supported. We can easily isolate the s
 - SG90 servo motor, red cable on A 5.5V pin, brown cable on a ground pin, yellow cable on the GPIO 18 (12th pin) ; installed with something to hide the camera when closed and free the camera when open
 - Raspberry pi OS with internet configured and docker engine
 
-![](doc/device-shutter-closed.png) ![](doc/device-shutter-open.png)
+![](doc/device-shutter-closed.jpg) ![](doc/device-shutter-open.jpg)
 
 ## Deploy
 
