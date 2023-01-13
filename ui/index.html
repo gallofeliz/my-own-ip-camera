@@ -17,15 +17,15 @@
 		<li><a href="//localhost:8888/fhd">HLS video</a></li>
 		<li><a href="rtsp://localhost/fhd">RTSP video</a></li>
 		<li><a href="rtmp://localhost/fhd">RTMP video</a></li>
-		<li><button onclick="shutter(true)">Open Shutter</li>
-		<li><button onclick="shutter(false)">Close Shutter</li>
+		<li><button onclick="shutter('open')">Open Shutter</li>
+		<li><button onclick="shutter('closed')">Close Shutter</li>
+		<li><button onclick="shutter('auto')">Auto Shutter</li>
 	</ul>
 
 	<script type="text/javascript">
 		document.querySelectorAll('a').forEach(a => a.href = a.href.replace('localhost', location.hostname))
 
 		async function shutter(value) {
-			value = value ? 'open' : 'closed'
 			try {
 				const e = await fetch('shutter', {
 					method: 'POST',

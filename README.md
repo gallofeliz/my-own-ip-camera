@@ -16,7 +16,10 @@ Currently Raspberry PI is supported. We can easily isolate the services and have
 
 - Go to http://camHostOrIP/ to have URLS and actions
 - Video (one size) RTSP + HLS + RTMP "on demand"
-- Image directly from camera if possible else from video stream
+- Image (snapshot) directly from camera if possible else from video stream
+- Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
+
+![](mobile-index.png)
 
 ## Why not next
 
@@ -29,7 +32,6 @@ Currently Raspberry PI is supported. We can easily isolate the services and have
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
   - https://www.happytimesoft.com/products/onvif-server/index.html
-- Close camera on idle or requested with servo motor
 - Detect with accelemeter (or similar) camera position and ajust auto flip
 - Add audio
 - Add led to say that cam is used

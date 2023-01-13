@@ -4,10 +4,13 @@ const {handleExitSignals} = require('@gallofeliz/js-libs/exit-handle')
 const { Logger } = require('@gallofeliz/js-libs/logger')
 const runProcess = require('@gallofeliz/js-libs/process').default
 const httpRequest = require('@gallofeliz/js-libs/http-request').default
+const { durationToMilliSeconds } = require('@gallofeliz/js-libs/utils')
 
 const logger = createLogger('info')
 
-let autoShutter = true
+let autoShutter = false
+let autoShufferWaitBeforeClose = '15s'
+let autoShutterWaitBeforeCloseTimeout = null
 
 async function shutter(open) {
     const openValue = 12.5
@@ -45,7 +48,12 @@ const server = new HttpServer({
                 async handler(req, res) {
                     try {
                         if (autoShutter) {
-                            shutter(true)
+                            if (autoShutterWaitBeforeCloseTimeout) {
+                                clearTimeout(autoShutterWaitBeforeCloseTimeout)
+                                autoShutterWaitBeforeCloseTimeout = null
+                            } else {
+                                shutter(true)
+                            }
                         }
 
                         res.header('Content-Type: image/jpeg')
@@ -73,7 +81,13 @@ const server = new HttpServer({
 
                     } finally {
                         if (autoShutter) {
-                            shutter(false)
+                            autoShutterWaitBeforeCloseTimeout = setTimeout(
+                                () => {
+                                    autoShutterWaitBeforeCloseTimeout = null
+                                    shutter(false)
+                                },
+                                durationToMilliSeconds(autoShufferWaitBeforeClose)
+                            )
                         }
                     }
 
