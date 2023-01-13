@@ -13,8 +13,10 @@
 <body>
     <h1>My Own Ip Camera</h1>
     <ul>
-        <li><a href="fhd.jpg">JPG FHD Picture</a></li>
-        <li><a href="hd.jpg">JPG HD Picture</a></li>
+        <li id="jpg"><a href="fhd.jpg">JPG Picture</a>
+            <select onchange="updateJpgLink()"><option value="fhd">FHD</option><option value="hd">HD</option></select>
+            <input type="range" min="1" max="100" onchange="updateJpgLink()" value="90">
+        </li>
         <li><a href="//localhost:8888/fhd">HLS video</a></li>
         <li><a href="rtsp://localhost/fhd">RTSP video</a></li>
         <li><a href="rtmp://localhost/fhd">RTMP video</a></li>
@@ -26,6 +28,17 @@
 
     <script type="text/javascript">
         document.querySelectorAll('a').forEach(a => a.href = a.href.replace('localhost', location.hostname))
+
+        function updateJpgLink(props) {
+            let link = document.querySelector('#jpg select').value + '.jpg'
+            const quality = document.querySelector('#jpg input').value
+
+            if (quality !== '90') {
+                link += '?quality=' + quality
+            }
+
+            document.querySelector('#jpg a').href=link
+        }
 
         async function flip() {
             await _fetch('flip', { method: 'POST' })
