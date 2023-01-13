@@ -12,6 +12,8 @@ let autoShutter = false
 let autoShufferWaitBeforeClose = '15s'
 let autoShutterWaitBeforeCloseTimeout = null
 
+let doFlip = false
+
 async function shutter(open) {
     const openValue = 12.5
     const closedValue = 2.5
@@ -25,12 +27,24 @@ async function shutter(open) {
     }, true)
 }
 
+async function flip() {
+    doFlip = !doFlip
+}
+
 const server = new HttpServer({
     port: 80,
     logger,
     webUiFilesPath: 'ui',
     api: {
         routes: [
+            {
+                method: 'POST',
+                path: '/flip',
+                async handler(req, res) {
+                    await flip()
+                    res.status(201).end()
+                }
+            },
             {
                 method: 'POST',
                 path: '/shutter',
@@ -73,7 +87,13 @@ const server = new HttpServer({
                             }, true)
                         } else {
                             await runProcess({
-                                command: ['libcamera-jpeg', '--mode', '1920:1080', '--width', '1920', '--height', '1080', '--hflip', '1', '--vflip', '1', '-n', '-o', '-'],
+                                command: [
+                                    'libcamera-jpeg',
+                                    '--mode', '1920:1080',
+                                    '--width', '1920',
+                                    '--height', '1080',
+                                    '-n', '-o', '-'
+                                ].concat(doFlip ? ['--hflip', '1', '--vflip', '1']: []),
                                 logger,
                                 outputStream: res
                             }, true)
