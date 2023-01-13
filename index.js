@@ -86,9 +86,13 @@ class Shutter {
 const shutter = shutterSupport ? new Shutter : null;
 
 let cameraIsBusy = false
+let cameraIsBusyBy = null
 
-function setCameraBusy(bool) {
-    cameraIsBusy = bool
+function setCameraBusy(whoUseIt) {
+    cameraIsBusy = !!whoUseIt
+    cameraIsBusyBy = whoUseIt
+
+    logger.info('Camera busy', { cameraIsBusyBy })
 
     if (shutter) {
         shutter.onCameraBusyChange(cameraIsBusy)
@@ -120,10 +124,10 @@ const server = new HttpServer({
                 method: 'POST',
                 path: '/internal/video-uses-camera',
                 async handler(req, res) {
-                    setCameraBusy(true)
+                    setCameraBusy('video')
 
                     req.once('close', () => {
-                        setCameraBusy(false)
+                        setCameraBusy(null)
                     })
                 }
             },
@@ -152,7 +156,8 @@ const server = new HttpServer({
                 path: '/fhd.jpg',
                 async handler(req, res) {
                     res.header('Content-Type: image/jpeg')
-
+                    // Use video stream if already busy by it
+                    // But also if too many requests on image endpoint
                     if (cameraIsBusy) {
                         await runProcess({
                             command: [
@@ -167,7 +172,7 @@ const server = new HttpServer({
                             outputStream: res
                         }, true)
                     } else {
-                        setCameraBusy(true)
+                        setCameraBusy('image')
                         try {
                             await runProcess({
                                 command: [
@@ -181,7 +186,7 @@ const server = new HttpServer({
                                 outputStream: res
                             }, true)
                         } finally {
-                            setCameraBusy(false)
+                            setCameraBusy(null)
                         }
                     }
                 }
@@ -191,6 +196,7 @@ const server = new HttpServer({
 })
 
 server.start()
+logger.info('My Own Camera IP started. Welcome !')
 
 handleExitSignals(() => {
     logger.info('bye bye')
