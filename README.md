@@ -23,6 +23,13 @@ Currently Raspberry PI with its camera is supported. We can easily isolate the s
 - Camera for Raspberry pi
 - SG90 servo motor, red cable on A 5.5V pin, brown cable on a ground pin, yellow cable on the GPIO 18 (12th pin) ; installed with something to hide the camera when closed and free the camera when open
 - Raspberry pi OS with internet configured and docker engine
+- Disable leds (/boot/config.txt)
+```
+dtparam=act_led_trigger=none
+dtparam=act_led_activelow=off
+dtparam=pwr_led_trigger=none
+dtparam=pwr_led_activelow=off
+```
 
 ![](doc/device-shutter-closed.jpg) ![](doc/device-shutter-open.jpg)
 
@@ -51,9 +58,3 @@ Currently Raspberry PI with its camera is supported. We can easily isolate the s
 - Detect with accelemeter (or similar) camera position and ajust auto flip
 - Add audio
 - Add led to say that cam is used ?
-- Disable rpi leds on startup
-
-## Disable leds
-
-`sudo bash -c 'echo 0 > /sys/class/leds/led0/brightness'`
-`sudo bash -c 'echo 0 > /sys/class/leds/led1/brightness'`
