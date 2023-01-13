@@ -10,6 +10,7 @@ const logger = createLogger('info')
 
 let doFlip = false
 
+const shutterSupport = true
 const autoShufferWaitBeforeClose = '15s'
 
 class Shutter {
@@ -82,14 +83,16 @@ class Shutter {
     }
 }
 
-const shutter = new Shutter;
+const shutter = shutterSupport ? new Shutter : null;
 
 let cameraIsBusy = false
 
 function setCameraBusy(bool) {
     cameraIsBusy = bool
 
-    shutter.onCameraBusyChange(cameraIsBusy)
+    if (shutter) {
+        shutter.onCameraBusyChange(cameraIsBusy)
+    }
 }
 
 async function flip() {
@@ -137,6 +140,9 @@ const server = new HttpServer({
                 path: '/shutter',
                 inputBodySchema: { enum: ['open', 'closed', 'auto'] },
                 async handler(req, res) {
+                    if (!shutter) {
+                        throw new Error('No Shutter')
+                    }
                     await shutter.setMode(req.body)
                     res.status(201).end()
                 }

@@ -38,7 +38,7 @@ Currently Raspberry PI with its camera is supported. We can easily isolate the s
 
 ## Why not next
 
-- Empty config for rtsp service, the main service will setup and update it (needed for next)
+- Empty config for rtsp service, the main service will setup and update it
 - Improve image snapshot performances (reduce time)
 - Various sizing for images (and videos ?)
 - Front URLS from API
