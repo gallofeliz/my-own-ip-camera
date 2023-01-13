@@ -8,7 +8,7 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 
 - Go to http://camHostOrIP/ to have URLS and actions
 - Video (one size) RTSP + HLS + RTMP "on demand"
-- Image (snapshot) directly from camera if possible else from video stream
+- Image (snapshot) directly from camera if possible else from video stream (fhd/hd with choose of quality)
 - Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
 
 ![](doc/mobile-index.png)
