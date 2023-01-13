@@ -6,6 +6,7 @@ paths:
     #rpiCameraFPS: 10
     sourceOnDemand: yes
     sourceOnDemandCloseAfter: 1s
+    runOnReady: 'curl -sX POST http://localhost/internal/video-uses-camera'
   #hd:
   #  source: rpiCamera
   #  rpiCameraMode: 1280:720

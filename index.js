@@ -8,28 +8,92 @@ const { durationToMilliSeconds } = require('@gallofeliz/js-libs/utils')
 
 const logger = createLogger('info')
 
-let autoShutter = false
-let autoShufferWaitBeforeClose = '15s'
-let autoShutterWaitBeforeCloseTimeout = null
-
 let doFlip = false
 
-async function shutter(open) {
-    const openValue = 12.5
-    const closedValue = 2.5
+const autoShufferWaitBeforeClose = '15s'
 
-    await runProcess({
-        command: [
-            './shutter.py',
-            open ? openValue : closedValue
-        ],
-        logger
-    }, true)
+class Shutter {
+    constructor() {
+        this.setMode('closed')
+        this.autoTimeout = null
+    }
+
+    clearAutoTimeout() {
+        clearTimeout(this.autoTimeout)
+        this.autoTimeout = null
+    }
+
+    setMode(mode) {
+        if (this.mode === mode === 'auto') {
+            return
+        }
+
+        this.mode = mode
+
+        switch(this.mode) {
+            case 'auto':
+                if (cameraIsBusy) {
+                    this.onCameraBusyChange(cameraIsBusy)
+                } else {
+                    this.putHardwareShutter(false)
+                }
+                break
+            case 'closed':
+                this.clearAutoTimeout()
+                this.putHardwareShutter(false)
+                break
+            case 'open':
+                this.clearAutoTimeout()
+                this.putHardwareShutter(true)
+                break
+        }
+    }
+
+    async putHardwareShutter(open) {
+        const openValue = 12.5
+        const closedValue = 2.5
+
+        await runProcess({
+            command: [
+                './shutter.py',
+                open ? openValue : closedValue
+            ],
+            logger
+        }, true)
+    }
+
+    onCameraBusyChange(cameraIsBusy) {
+        if (this.mode !== 'auto') {
+            return
+        }
+
+        this.clearAutoTimeout()
+
+        if (!cameraIsBusy) {
+            this.autoTimeout = setTimeout(
+                () => {
+                    this.putHardwareShutter(false)
+                    this.clearAutoTimeout()
+                }, durationToMilliSeconds(autoShufferWaitBeforeClose)
+            )
+        } else {
+            this.putHardwareShutter(true)
+        }
+    }
+}
+
+const shutter = new Shutter;
+
+let cameraIsBusy = false
+
+function setCameraBusy(bool) {
+    cameraIsBusy = bool
+
+    shutter.onCameraBusyChange(cameraIsBusy)
 }
 
 async function flip() {
     doFlip = !doFlip
-
 
     await httpRequest({
         method: 'POST',
@@ -51,6 +115,17 @@ const server = new HttpServer({
         routes: [
             {
                 method: 'POST',
+                path: '/internal/video-uses-camera',
+                async handler(req, res) {
+                    setCameraBusy(true)
+
+                    req.once('close', () => {
+                        setCameraBusy(false)
+                    })
+                }
+            },
+            {
+                method: 'POST',
                 path: '/flip',
                 async handler(req, res) {
                     await flip()
@@ -62,9 +137,7 @@ const server = new HttpServer({
                 path: '/shutter',
                 inputBodySchema: { enum: ['open', 'closed', 'auto'] },
                 async handler(req, res) {
-                    const expected = req.body
-                    autoShutter = expected === 'auto'
-                    await shutter(expected === 'open')
+                    await shutter.setMode(req.body)
                     res.status(201).end()
                 }
             },
@@ -72,32 +145,24 @@ const server = new HttpServer({
                 method: 'GET',
                 path: '/fhd.jpg',
                 async handler(req, res) {
-                    try {
-                        if (autoShutter) {
-                            if (autoShutterWaitBeforeCloseTimeout) {
-                                clearTimeout(autoShutterWaitBeforeCloseTimeout)
-                                autoShutterWaitBeforeCloseTimeout = null
-                            } else {
-                                shutter(true)
-                            }
-                        }
+                    res.header('Content-Type: image/jpeg')
 
-                        res.header('Content-Type: image/jpeg')
-
-                        const camAlreadyUsedByVideoServer = await httpRequest({
-                            url: 'http://127.0.0.1:9997/v1/paths/list',
-                            outputType: 'json',
+                    if (cameraIsBusy) {
+                        await runProcess({
+                            command: [
+                                'ffmpeg',
+                                '-i', 'http://localhost:8888/fhd/stream.m3u8',
+                                '-ss', '00:00:01.500',
+                                '-f', 'image2',
+                                '-frames:v', '1',
+                                 '-'
+                            ],
                             logger,
-                            responseTransformation: 'items.fhd.sourceReady'
-                        })
-
-                        if (camAlreadyUsedByVideoServer) {
-                            await runProcess({
-                                command: ['ffmpeg', '-i', 'http://localhost:8888/fhd/stream.m3u8', '-ss', '00:00:01.500', '-f', 'image2', '-frames:v', '1', '-'],
-                                logger,
-                                outputStream: res
-                            }, true)
-                        } else {
+                            outputStream: res
+                        }, true)
+                    } else {
+                        setCameraBusy(true)
+                        try {
                             await runProcess({
                                 command: [
                                     'libcamera-jpeg',
@@ -109,20 +174,10 @@ const server = new HttpServer({
                                 logger,
                                 outputStream: res
                             }, true)
-                        }
-
-                    } finally {
-                        if (autoShutter) {
-                            autoShutterWaitBeforeCloseTimeout = setTimeout(
-                                () => {
-                                    autoShutterWaitBeforeCloseTimeout = null
-                                    shutter(false)
-                                },
-                                durationToMilliSeconds(autoShufferWaitBeforeClose)
-                            )
+                        } finally {
+                            setCameraBusy(false)
                         }
                     }
-
                 }
             }
         ]
