@@ -33,3 +33,8 @@ Currently Raspberry PI is supported. We can easily isolate the services and have
 - Detect with accelemeter (or similar) camera position and ajust auto flip
 - Add audio
 - Add led to say that cam is used
+
+## Disable leds
+
+`sudo bash -c 'echo 0 > /sys/class/leds/led0/brightness'`
+`sudo bash -c 'echo 0 > /sys/class/leds/led1/brightness'`

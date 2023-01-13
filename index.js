@@ -7,6 +7,21 @@ const httpRequest = require('@gallofeliz/js-libs/http-request').default
 
 const logger = createLogger('info')
 
+let autoShutter = true
+
+async function shutter(open) {
+    const openValue = 12.5
+    const closedValue = 2.5
+
+    await runProcess({
+        command: [
+            './shutter.py',
+            open ? openValue : closedValue
+        ],
+        logger
+    }, true)
+}
+
 const server = new HttpServer({
     port: 80,
     logger,
@@ -16,20 +31,11 @@ const server = new HttpServer({
             {
                 method: 'POST',
                 path: '/shutter',
-                inputBodySchema: { enum: ['open', 'closed'] },
+                inputBodySchema: { enum: ['open', 'closed', 'auto'] },
                 async handler(req, res) {
-                    const openValue = 12.5
-                    const closedValue = 2.5
                     const expected = req.body
-
-                    await runProcess({
-                        command: [
-                            './shutter.py',
-                            expected === 'open' ? openValue : closedValue
-                        ],
-                        logger
-                    }, true)
-
+                    autoShutter = expected === 'auto'
+                    await shutter(expected === 'open')
                     res.status(201).end()
                 }
             },
@@ -37,28 +43,40 @@ const server = new HttpServer({
                 method: 'GET',
                 path: '/fhd.jpg',
                 async handler(req, res) {
-                    res.header('Content-Type: image/jpeg')
+                    try {
+                        if (autoShutter) {
+                            shutter(true)
+                        }
 
-                    const camAlreadyUsedByVideoServer = await httpRequest({
-                        url: 'http://127.0.0.1:9997/v1/paths/list',
-                        outputType: 'json',
-                        logger,
-                        responseTransformation: 'items.fhd.sourceReady'
-                    })
+                        res.header('Content-Type: image/jpeg')
 
-                    if (camAlreadyUsedByVideoServer) {
-                        return await runProcess({
-                            command: ['ffmpeg', '-i', 'http://localhost:8888/fhd/stream.m3u8', '-ss', '00:00:01.500', '-f', 'image2', '-frames:v', '1', '-'],
+                        const camAlreadyUsedByVideoServer = await httpRequest({
+                            url: 'http://127.0.0.1:9997/v1/paths/list',
+                            outputType: 'json',
                             logger,
-                            outputStream: res
-                        }, true)
+                            responseTransformation: 'items.fhd.sourceReady'
+                        })
+
+                        if (camAlreadyUsedByVideoServer) {
+                            await runProcess({
+                                command: ['ffmpeg', '-i', 'http://localhost:8888/fhd/stream.m3u8', '-ss', '00:00:01.500', '-f', 'image2', '-frames:v', '1', '-'],
+                                logger,
+                                outputStream: res
+                            }, true)
+                        } else {
+                            await runProcess({
+                                command: ['libcamera-jpeg', '--mode', '1920:1080', '--width', '1920', '--height', '1080', '--hflip', '1', '--vflip', '1', '-n', '-o', '-'],
+                                logger,
+                                outputStream: res
+                            }, true)
+                        }
+
+                    } finally {
+                        if (autoShutter) {
+                            shutter(false)
+                        }
                     }
 
-                    await runProcess({
-                        command: ['libcamera-jpeg', '--mode', '1920:1080', '--width', '1920', '--height', '1080', '--hflip', '1', '--vflip', '1', '-n', '-o', '-'],
-                        logger,
-                        outputStream: res
-                    }, true)
                 }
             }
         ]
