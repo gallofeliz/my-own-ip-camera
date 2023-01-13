@@ -26,6 +26,12 @@ Currently Raspberry PI with its camera is supported. We can easily isolate the s
 
 ![](doc/device-shutter-closed.jpg) ![](doc/device-shutter-open.jpg)
 
+## Use (as user)
+
+- You can call http/rtsp/etc endpoints to control and view your camera
+- You can use https://github.com/gallofeliz/cameras-images-recorder to register and view pictures from your camera
+- You can use any application for that, like MotionEye (https://github.com/motioneye-project/motioneye), VLC, any camera recorder that supports RTSP/HLS/RTMP/JPG camera
+
 ## Deploy
 
 `./deploy.sh $camHostOrIp`
