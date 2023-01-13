@@ -29,6 +29,18 @@ async function shutter(open) {
 
 async function flip() {
     doFlip = !doFlip
+
+
+    await httpRequest({
+        method: 'POST',
+        url: 'http://127.0.0.1:9997/v1/config/paths/edit/fhd',
+        bodyData: {
+            rpiCameraVFlip: doFlip,
+            rpiCameraHFlip: doFlip
+        },
+        bodyType: 'json',
+        logger,
+    })
 }
 
 const server = new HttpServer({

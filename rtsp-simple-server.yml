@@ -1,8 +1,8 @@
 paths:
   fhd:
     source: rpiCamera
-    rpiCameraVFlip: true
-    rpiCameraHFlip: true
+    #rpiCameraVFlip: true
+    #rpiCameraHFlip: true
     #rpiCameraFPS: 10
     sourceOnDemand: yes
     sourceOnDemandCloseAfter: 1s
