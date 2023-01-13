@@ -39,11 +39,12 @@ Currently Raspberry PI with its camera is supported. We can easily isolate the s
 ## Why not next
 
 - Empty config for rtsp service, the main service will setup and update it
-- Improve image snapshot performances (reduce time)
-- Various sizing for images (and videos ?)
+- Various sizing for videos
+  - With the same application with ffmpeg to publish to other path ?
+  - With endpoint to configure size ?
 - Front URLS from API
 - State save for flip and others configs
-- Add time/date in frames
+- Add time/date in frames ?
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
   - https://www.happytimesoft.com/products/onvif-server/index.html
