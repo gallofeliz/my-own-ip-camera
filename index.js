@@ -12,7 +12,6 @@ let doFlip = false
 
 const shutterSupport = true
 const autoShufferWaitBeforeClose = '15s'
-
 let cameraIsBusy = false
 let cameraIsBusyBy = null
 
@@ -20,6 +19,7 @@ class Shutter {
     constructor() {
         this.setMode('auto')
         this.autoTimeout = null
+        this.shutterOpen = null
     }
 
     clearAutoTimeout() {
@@ -64,6 +64,8 @@ class Shutter {
             ],
             logger
         }, true)
+
+        this.shutterOpen = open
     }
 
     onCameraBusyChange(cameraIsBusy) {
@@ -81,7 +83,10 @@ class Shutter {
                 }, durationToMilliSeconds(autoShufferWaitBeforeClose)
             )
         } else {
-            this.putHardwareShutter(true)
+            // Avoid make noise !
+            if (!this.shutterOpen) {
+                this.putHardwareShutter(true)
+            }
         }
     }
 }
@@ -172,10 +177,14 @@ const server = new HttpServer({
                     const quality = req.query.quality || 90
                     const forceVideoSource = req.query.forceVideoSource
 
-                    const sizes = ({
+                    const sizes = {
                         fhd: [1920, 1080],
-                        hd: [1080, 720]
-                    })[sizeName]
+                        hd: [1280, 720]
+                    }
+
+                    const size = sizes[sizeName]
+
+                    const ffmpegQuality = Math.floor((101-quality)*30/100)+1
 
                     res.header('Content-Type: image/jpeg')
                     // Use video stream if already busy by it
@@ -188,8 +197,8 @@ const server = new HttpServer({
                                 '-ss', '00:00:01.500',
                                 '-f', 'image2',
                                 '-frames:v', '1',
-                                '-vf', 'scale=' + sizes.join(':'),
-                                '-q:v', Math.floor((101-quality)*30/100)+1,
+                                '-vf', 'scale=' + size.join(':'),
+                                '-q:v', ffmpegQuality,
                                 '-'
                             ],
                             logger,
@@ -201,9 +210,9 @@ const server = new HttpServer({
                             await runProcess({
                                 command: [
                                     'libcamera-jpeg',
-                                    '--mode', '1920:1080',
-                                    '--width', sizes[0],
-                                    '--height', sizes[1],
+                                    '--mode', size.join(':'),
+                                    '--width', size[0],
+                                    '--height', size[1],
                                     '-n', '-o', '-', '-q', quality, '-t', 5
                                 ].concat(doFlip ? ['--hflip', '1', '--vflip', '1']: []),
                                 logger,
