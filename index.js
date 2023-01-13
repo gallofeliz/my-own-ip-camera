@@ -13,9 +13,12 @@ let doFlip = false
 const shutterSupport = true
 const autoShufferWaitBeforeClose = '15s'
 
+let cameraIsBusy = false
+let cameraIsBusyBy = null
+
 class Shutter {
     constructor() {
-        this.setMode('closed')
+        this.setMode('auto')
         this.autoTimeout = null
     }
 
@@ -85,9 +88,6 @@ class Shutter {
 
 const shutter = shutterSupport ? new Shutter : null;
 
-let cameraIsBusy = false
-let cameraIsBusyBy = null
-
 function setCameraBusy(whoUseIt) {
     cameraIsBusy = !!whoUseIt
     cameraIsBusyBy = whoUseIt
@@ -153,12 +153,34 @@ const server = new HttpServer({
             },
             {
                 method: 'GET',
-                path: '/fhd.jpg',
+                inputQuerySchema: {
+                    type: 'object',
+                    properties: {
+                        quality: {
+                            type: 'number',
+                            multipleOf: 1,
+                            minimum: 1,
+                            maximum: 100
+                        },
+                        forceVideoSource: { type: 'boolean' }
+                    }
+                },
+                path: '/:sizeName(fhd|hd).jpg',
                 async handler(req, res) {
+                    const sizeName = req.params.sizeName
+
+                    const quality = req.query.quality || 90
+                    const forceVideoSource = req.query.forceVideoSource
+
+                    const sizes = ({
+                        fhd: [1920, 1080],
+                        hd: [1080, 720]
+                    })[sizeName]
+
                     res.header('Content-Type: image/jpeg')
                     // Use video stream if already busy by it
                     // But also if too many requests on image endpoint
-                    if (cameraIsBusy) {
+                    if (cameraIsBusy || forceVideoSource) {
                         await runProcess({
                             command: [
                                 'ffmpeg',
@@ -166,7 +188,9 @@ const server = new HttpServer({
                                 '-ss', '00:00:01.500',
                                 '-f', 'image2',
                                 '-frames:v', '1',
-                                 '-'
+                                '-vf', 'scale=' + sizes.join(':'),
+                                '-q:v', Math.floor((101-quality)*30/100)+1,
+                                '-'
                             ],
                             logger,
                             outputStream: res
@@ -178,9 +202,9 @@ const server = new HttpServer({
                                 command: [
                                     'libcamera-jpeg',
                                     '--mode', '1920:1080',
-                                    '--width', '1920',
-                                    '--height', '1080',
-                                    '-n', '-o', '-'
+                                    '--width', sizes[0],
+                                    '--height', sizes[1],
+                                    '-n', '-o', '-', '-q', quality, '-t', 5
                                 ].concat(doFlip ? ['--hflip', '1', '--vflip', '1']: []),
                                 logger,
                                 outputStream: res
