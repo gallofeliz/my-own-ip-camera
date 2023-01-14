@@ -15,11 +15,16 @@ const autoShufferWaitBeforeClose = '15s'
 let cameraIsBusy = false
 let cameraIsBusyBy = null
 
+const shutterOpenValue = 12.5
+const shutterClosedValue = 2.5
+
 class Shutter {
     constructor() {
-        this.setMode('auto')
+        this.currentRunningShutter = null
         this.autoTimeout = null
+        // Notice I
         this.shutterOpen = null
+        this.setMode('auto')
     }
 
     clearAutoTimeout() {
@@ -54,21 +59,21 @@ class Shutter {
     }
 
     async putHardwareShutter(open) {
-        const openValue = 12.5
-        const closedValue = 2.5
-
-        await runProcess({
-            command: [
-                './shutter.py',
-                open ? openValue : closedValue
-            ],
-            logger
-        }, true)
-
-        this.shutterOpen = open
+        // Avoid collisions with promise "queue"
+        await (this.currentRunningShutter = (this.currentRunningShutter || Promise.resolve())
+        .then(async () => {
+            await runProcess({
+                command: [
+                    './shutter.py',
+                    open ? shutterOpenValue : shutterClosedValue
+                ],
+                logger
+            }, true)
+            this.shutterOpen = open
+        }))
     }
 
-    onCameraBusyChange(cameraIsBusy) {
+    async onCameraBusyChange(cameraIsBusy) {
         if (this.mode !== 'auto') {
             return
         }
@@ -85,7 +90,7 @@ class Shutter {
         } else {
             // Avoid make noise !
             if (!this.shutterOpen) {
-                this.putHardwareShutter(true)
+                await this.putHardwareShutter(true)
             }
         }
     }
@@ -93,14 +98,14 @@ class Shutter {
 
 const shutter = shutterSupport ? new Shutter : null;
 
-function setCameraBusy(whoUseIt) {
+async function setCameraBusy(whoUseIt) {
     cameraIsBusy = !!whoUseIt
     cameraIsBusyBy = whoUseIt
 
     logger.info('Camera busy', { cameraIsBusyBy })
 
     if (shutter) {
-        shutter.onCameraBusyChange(cameraIsBusy)
+        await shutter.onCameraBusyChange(cameraIsBusy)
     }
 }
 
@@ -205,7 +210,7 @@ const server = new HttpServer({
                             outputStream: res
                         }, true)
                     } else {
-                        setCameraBusy('image')
+                        await setCameraBusy('image')
                         try {
                             await runProcess({
                                 command: [
