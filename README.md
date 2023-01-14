@@ -10,6 +10,7 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 - Video (one size) RTSP + HLS + RTMP "on demand"
 - Image (snapshot) directly from camera if possible else from video stream (fhd/hd with choose of quality)
 - Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
+- Some possible configurations (especially on shutter, you can deactivate it with env shutter_enabled=false) ; see https://github.com/gallofeliz/js-libs/tree/master/src/config (warning: master to replace to good version)
 
 ![](doc/mobile-index.png)
 

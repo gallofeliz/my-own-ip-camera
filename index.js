@@ -5,18 +5,46 @@ const { Logger } = require('@gallofeliz/js-libs/logger')
 const runProcess = require('@gallofeliz/js-libs/process').default
 const httpRequest = require('@gallofeliz/js-libs/http-request').default
 const { durationToMilliSeconds } = require('@gallofeliz/js-libs/utils')
+const loadConfig = require('@gallofeliz/js-libs/config').default
 
-const logger = createLogger('info')
+const config = loadConfig({
+    filename: '/etc/cam/config.yml',
+    mandatoryFile: false,
+    userProvidedConfigSchema: {
+        type: 'object',
+        properties: {
+            logs: {
+                type: 'object',
+                properties: {
+                    level: { enum: ['debug', 'info'], default: 'info' }
+                },
+                default: {}
+            },
+            shutter: {
+                type: 'object',
+                properties: {
+                    enabled: { type: 'boolean', default: true },
+                    openValue: { type: 'number', default: 12.5 },
+                    closedValue: { type: 'number', default: 2.5 },
+                    autoWaitBeforeClose: { type: 'string', default: '0s' }
+                },
+                default: {}
+            }
+        }
+    }
+})
+
+const logger = createLogger(config.logs.level)
 
 let doFlip = false
 
-const shutterSupport = true
-const autoShufferWaitBeforeClose = '15s'
+const shutterSupport = config.shutter.enabled
+const autoShufferWaitBeforeClose = config.shutter.autoWaitBeforeClose
 let cameraIsBusy = false
 let cameraIsBusyBy = null
 
-const shutterOpenValue = 12.5
-const shutterClosedValue = 2.5
+const shutterOpenValue = config.shutter.openValue
+const shutterClosedValue = config.shutter.closedValue
 
 class Shutter {
     constructor() {
