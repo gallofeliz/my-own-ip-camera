@@ -39,7 +39,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
     const logger = createLogger(config.logs.level)
 
     const state = await createPersistantObject(
-        { flip: false, shutterAutoWaitBeforeClose: '0s' },
+        { flip: false, shutterAutoWaitBeforeClose: '0s', shutterMode: 'auto' },
         new PersistantObjectFileHandler('/var/lib/cam/state.json')
     )
 
@@ -51,12 +51,12 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
     const shutterClosedValue = config.shutter.closedValue
 
     class Shutter {
-        constructor() {
+        constructor(mode = 'auto') {
             this.currentRunningShutter = null
             this.autoTimeout = null
             // Notice I
             this.shutterOpen = null
-            this.setMode('auto')
+            this.setMode(mode)
         }
 
         clearAutoTimeout() {
@@ -69,7 +69,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 return
             }
 
-            this.mode = mode
+            this.mode = state.shutterMode = mode
 
             switch(this.mode) {
                 case 'auto':
@@ -128,7 +128,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         }
     }
 
-    const shutter = shutterSupport ? new Shutter : null;
+    const shutter = shutterSupport ? new Shutter(state.shutterMode) : null;
 
     async function setCameraBusy(whoUseIt) {
         cameraIsBusy = !!whoUseIt
