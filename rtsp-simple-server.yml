@@ -1,18 +1,10 @@
 paths:
   fhd:
     source: rpiCamera
-    #rpiCameraVFlip: true
-    #rpiCameraHFlip: true
-    #rpiCameraFPS: 10
     sourceOnDemand: yes
     sourceOnDemandCloseAfter: 1s
     runOnReady: 'curl -sX POST http://localhost/internal/video-uses-camera'
-  #hd:
-  #  source: rpiCamera
-  #  rpiCameraMode: 1280:720
-  #ld:
-  #  source: rpiCamera
-  #  rpiCameraMode: 778:432 
+    runOnReadyRestart: yes
 
 rtspAddress: :554
 api: true
