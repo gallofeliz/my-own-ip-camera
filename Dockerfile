@@ -18,6 +18,8 @@ RUN npm i
 ADD index.js shutter.py ./
 ADD ui ui
 
+VOLUME /var/lib/cam
+
 #USER nobody
 
 CMD ["node", "index.js"]

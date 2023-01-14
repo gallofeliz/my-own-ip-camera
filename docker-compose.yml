@@ -10,8 +10,7 @@ services:
     tmpfs: /dev/shm:exec
     volumes:
       - /run/udev:/run/udev:ro
-    environment:
-      - shutter_autoWaitBeforeClose=10s
+      - cam:/var/lib/cam
   rtsp:
     restart: unless-stopped
     image: aler9/rtsp-simple-server:latest-rpi
@@ -22,3 +21,6 @@ services:
     volumes:
       - /run/udev:/run/udev:ro
       - ./rtsp-simple-server.yml:/rtsp-simple-server.yml:ro
+
+volumes:
+  cam:

@@ -51,7 +51,6 @@ dtparam=pwr_led_activelow=off
   - With the same application with ffmpeg to publish to other path ?
   - With endpoint to configure size ?
 - Front URLS from API
-- State save for flip and others configs
 - Add time/date in frames ?
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
