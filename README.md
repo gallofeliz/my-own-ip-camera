@@ -57,4 +57,5 @@ dtparam=pwr_led_activelow=off
   - https://www.happytimesoft.com/products/onvif-server/index.html
 - Detect with accelemeter (or similar) camera position and ajust auto flip
 - Add audio
-- Add led to say that cam is used ?
+- Isolate internal / public ports ; put rtsp inside the docker image ? Or better separated (logs are better ;)) ?
+- Add led to say that cam is used ? Maybe we can use RPI already installed led 
