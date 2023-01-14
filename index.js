@@ -175,6 +175,20 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 },
                 {
                     method: 'POST',
+                    path: '/internal/video-auth',
+                    async handler(req, res) {
+                        if (req.body.action !== 'read') {
+                            res.status(401).end()
+                        }
+                        if (req.body.user === '') {
+                            // No auth
+                        }
+                        // .password .path
+                        res.status(201).end()
+                    }
+                },
+                {
+                    method: 'POST',
                     path: '/flip',
                     async handler(req, res) {
                         await doFlip()

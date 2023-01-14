@@ -6,5 +6,6 @@ paths:
     runOnReady: 'curl -sX POST http://localhost/internal/video-uses-camera'
     runOnReadyRestart: yes
 
+externalAuthenticationURL: 'http://localhost/internal/video-auth'
 rtspAddress: :554
 api: true
