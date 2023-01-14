@@ -24,6 +24,7 @@
         <li><button onclick="shutter('closed')">Close Shutter</button></li>
         <li id="autoshutter"><button onclick="shutter('auto')">Auto Shutter</button> <input type="text" value="(unknown)" /></li>
         <li><button onclick="flip()">Flip</button></li>
+        <li><button onclick="reboot()">Reboot</button></li>
     </ul>
 
     <script type="text/javascript">
@@ -53,6 +54,12 @@
 
             document.querySelector('#autoshutter input').value = v
         })();
+
+        async function reboot() {
+            await _fetch('reboot', {
+                method: 'POST'
+            })
+        }
 
         async function shutter(value) {
             if (value === 'auto') {

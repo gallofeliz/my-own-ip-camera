@@ -52,6 +52,7 @@ dtparam=pwr_led_activelow=off
   - With endpoint to configure size ?
 - Front URLS from API
 - Add time/date in frames ?
+- Add auth for some endpoints and/or for read image/video
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
   - https://www.happytimesoft.com/products/onvif-server/index.html

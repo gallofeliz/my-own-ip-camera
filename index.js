@@ -201,6 +201,18 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 },
                 {
                     method: 'POST',
+                    path: '/reboot',
+                    async handler(req, res) {
+                        res.status(201).end()
+
+                        await runProcess({
+                            command: 'echo b > /sysrq',
+                            logger
+                        }, true)
+                    }
+                },
+                {
+                    method: 'POST',
                     path: '/shutter',
                     inputBodySchema: { enum: ['open', 'closed', 'auto'] },
                     async handler(req, res) {

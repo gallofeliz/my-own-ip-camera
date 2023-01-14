@@ -11,6 +11,7 @@ services:
     volumes:
       - /run/udev:/run/udev:ro
       - cam:/var/lib/cam
+      - /proc/sysrq-trigger:/sysrq
   rtsp:
     restart: unless-stopped
     image: aler9/rtsp-simple-server:latest-rpi
