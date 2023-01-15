@@ -1,0 +1,3 @@
+FROM aler9/rtsp-simple-server:latest-rpi
+
+RUN apt-get update && apt-get install ffmpeg

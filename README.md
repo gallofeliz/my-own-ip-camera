@@ -7,7 +7,7 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 ## Features
 
 - Go to http://camHostOrIP/ to have URLS and actions
-- Video (one size) RTSP + HLS + RTMP "on demand"
+- Video RTSP + HLS + RTMP "on demand" (fhd/hd)
 - Image (snapshot) directly from camera if possible else from video stream (fhd/hd with choose of quality)
 - Rotation (each 90°)
 - Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
@@ -17,13 +17,40 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
   - auth_publicView=true|false (default false)
   - auth_viewer_username|password=XX (default viewer/viewer)
   - auth_admin_username|password=XX (default admin/admin)
+- Get infos on `http://user:pass@192.168.1.16/infos` (default viewer:viewer for viewer and admin:admin for admin) ; response will depend on anonymous/logged user
+```json
+{
+  "imageUrls": {
+    "fhd": "http://viewer:viewer@192.168.1.16/fhd.jpg",
+    "hd": "http://viewer:viewer@192.168.1.16/hd.jpg"
+  },
+  "videoUrls": {
+    "rtsp": {
+      "fhd": "rtsp://viewer:viewer@192.168.1.16/fhd",
+      "hd": "rtsp://viewer:viewer@192.168.1.16/hd"
+    },
+    "hls": {
+      "fhd": "http://viewer:viewer@192.168.1.16:8888/fhd",
+      "hd": "http://viewer:viewer@192.168.1.16:8888/hd"
+    },
+    "rtmp": {
+      "fhd": "rtmp://viewer:viewer@192.168.1.16/fhd",
+      "hd": "rtmp://viewer:viewer@192.168.1.16/hd"
+    }
+  },
+  "actions": {
+    "shutterWrite": false,
+    "rotateWrite": false,
+    "systemWrite": false
+  }
+}
+```
 
 ![](doc/ui.png)
 
 ## Limitations
 
 - Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems.
-- Only FHD video available yet
 - No ONVIF yet
 - No -90/90° video rotation yet
 
@@ -56,12 +83,7 @@ dtparam=pwr_led_activelow=off
 ## Why not next
 
 - Refactor code
-- Improve UI with correct auth injected in URLs
 - Empty config for rtsp service, the main service will setup and update it
-- Various sizing for videos
-  - With the same application with ffmpeg to publish to other path ?
-  - With endpoint to configure size ?
-- Front URLS from API
 - Add time/date in frames ?
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)

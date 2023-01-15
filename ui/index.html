@@ -13,26 +13,28 @@
 <body>
     <h1>My Own Ip Camera</h1>
     <ul>
-        <li id="jpg"><a href="fhd.jpg">JPG Picture</a>
+        <li id="jpg"><a href="(unknown)">JPG Picture</a>
             <select onchange="updateJpgLink()"><option value="fhd">FHD</option><option value="hd">HD</option></select>
             <input type="range" min="1" max="100" onchange="updateJpgLink()" value="90">
         </li>
-        <li><a href="//localhost:8888/fhd">HLS video</a></li>
-        <li><a href="rtsp://localhost/fhd">RTSP video</a></li>
-        <li><a href="rtmp://localhost/fhd">RTMP video</a></li>
-        <li><button onclick="shutter('open')">Open Shutter</button></li>
-        <li><button onclick="shutter('closed')">Close Shutter</button></li>
+        <li id="hls"><a href="(unknown)">HLS video</a> <select onchange="updateVideoLink('hls')"><option value="fhd">FHD</option><option value="hd">HD</option></select></li>
+        <li id="rtsp"><a href="(unknown)">RTSP video</a> <select onchange="updateVideoLink('rtsp')"><option value="fhd">FHD</option><option value="hd">HD</option></select></li>
+        <li id="rtmp"><a href="(unknown)">RTMP video</a> <select onchange="updateVideoLink('rtmp')"><option value="fhd">FHD</option><option value="hd">HD</option></select></li>
+        <li id="shutteropen"><button onclick="shutter('open')">Open Shutter</button></li>
+        <li id="shutterclose"><button onclick="shutter('closed')">Close Shutter</button></li>
         <li id="autoshutter"><button onclick="shutter('auto')">Auto Shutter</button> <input type="text" value="(unknown)" /></li>
         <li id="rotate"><button onclick="rotate()">Rotate</button> <select><option>none</option><option>counterclockwise</option><option>clockwise</option><option>reverse</option></select></li>
-        <li><button onclick="system('reboot')">Reboot</button></li>
-        <li><button onclick="system('halt')">Halt</button></li>
+        <li id="reboot"><button onclick="system('reboot')">Reboot</button></li>
+        <li id="halt"><button onclick="system('halt')">Halt</button></li>
     </ul>
 
     <script type="text/javascript">
-        document.querySelectorAll('a').forEach(a => a.href = a.href.replace('localhost', location.hostname))
+        function updateVideoLink(protocol) {
+            document.querySelector('#' + protocol + ' a').href = uiData.videoUrls[protocol][document.querySelector('#' + protocol + ' select').value]
+        }
 
-        function updateJpgLink(props) {
-            let link = document.querySelector('#jpg select').value + '.jpg'
+        function updateJpgLink() {
+            let link = uiData.imageUrls[document.querySelector('#jpg select').value]
             const quality = document.querySelector('#jpg input').value
 
             if (quality !== '90') {
@@ -49,6 +51,36 @@
                 headers: { 'Content-Type': 'application/json' }
             })
         }
+
+        let uiData = {};
+
+        (async () => {
+            const e = await _fetch('infos', {
+                method: 'GET'
+            })
+
+            uiData = await e.json()
+
+            updateJpgLink()
+            updateVideoLink('hls')
+            updateVideoLink('rtmp')
+            updateVideoLink('rtsp')
+
+            if (!uiData.actions.shutterWrite) {
+                document.querySelector('#shutteropen button').disabled = true
+                document.querySelector('#shutterclose button').disabled = true
+                document.querySelector('#autoshutter button').disabled = true
+                document.querySelector('#autoshutter input').disabled = true
+            }
+            if (!uiData.actions.rotateWrite) {
+                document.querySelector('#rotate button').disabled = true
+                document.querySelector('#rotate select').disabled = true
+            }
+            if (!uiData.actions.system) {
+                document.querySelector('#reboot button').disabled = true
+                document.querySelector('#halt button').disabled = true
+            }
+        })();
 
         (async () => {
             const e = await _fetch('shutter/auto-wait', {

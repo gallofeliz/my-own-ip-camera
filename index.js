@@ -61,7 +61,6 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
 
     const logger = createLogger(config.logs.level)
 
-    // TODO upgrade system ?
     const state = await createPersistantObject(
         { rotate: 'none', shutterAutoWaitBeforeClose: '0s', shutterMode: 'auto' },
         new PersistantObjectFileHandler('/var/lib/cam/state.json')
@@ -180,6 +179,21 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         })
     }
 
+    (async () => {
+        await httpRequest({
+            method: 'POST',
+            url: 'http://127.0.0.1:9997/v1/config/paths/edit/hd',
+            bodyData: {
+                runOnDemand: 'ffmpeg -hide_banner -loglevel error -i rtsp://'
+                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)
+                    +'@localhost/fhd -vf scale=1280:720 -pix_fmt yuv420p -c:v libx264 -preset ultrafast -b:v 600k -max_muxing_queue_size 1024 -f rtsp rtsp://'
+                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost/hd'
+            },
+            bodyType: 'json',
+            logger,
+        })
+    })
+
     const internalServer = new HttpServer({
         port: 8199,
         host: '127.0.0.1',
@@ -201,6 +215,10 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                     method: 'POST',
                     path: '/video-auth',
                     async handler(req, res) {
+                        if (req.body.action === 'publish' && req.body.path === 'hd' && ['::1', '127.0.0.1'].includes(req.body.ip)) {
+                            res.status(201).end()
+                        }
+
                         if (req.body.action !== 'read') {
                             res.status(401).end()
                         }
@@ -210,7 +228,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                                 res.status(401).end()
                             }
                         }
-                        // .password .path
+
                         res.status(201).end()
                     }
                 }
@@ -226,7 +244,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 {
                     username: config.auth.viewer.username,
                     password: config.auth.viewer.password,
-                    roles: ['view', 'shutter-read', 'rotate-read']
+                    roles: ['view', 'shutter-read', 'rotate-read', 'infos']
                 },
                 {
                     username: config.auth.admin.username,
@@ -237,13 +255,14 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
             extendedRoles: {
                 shutter: ['shutter-read', 'shutter-write'],
                 rotate: ['rotate-read', 'rotate-write'],
-                all: ['view', 'shutter', 'reboot', 'rotate']
+                all: ['view', 'shutter', 'system-write', 'rotate', 'infos']
             }
         },
         webUi: {
             filesPath: 'ui',
             auth: {
-                required: false
+                required: !config.auth.publicView,
+                roles:['view']
             }
         },
         api: {
@@ -264,8 +283,51 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 },
                 {
                     method: 'GET',
+                    path: '/infos',
+                    auth: {
+                        required: !config.auth.publicView,
+                        roles: ['infos']
+                    },
+                    async handler(req, res) {
+                        const host = req.get('host')
+                        const viewerUrlCred = config.auth.publicView
+                            ? host
+                            : encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password) + '@' + host
+
+                        const auth = req.auth || {}
+
+                        res.send(JSON.stringify({
+                            imageUrls: {
+                                fhd: 'http://' + viewerUrlCred + '/fhd.jpg',
+                                hd: 'http://' + viewerUrlCred + '/hd.jpg',
+                            },
+                            videoUrls: {
+                                rtsp: {
+                                    fhd: 'rtsp://' + viewerUrlCred + '/fhd',
+                                    hd: 'rtsp://' + viewerUrlCred + '/hd'
+                                },
+                                hls: {
+                                    fhd: 'http://' + viewerUrlCred + ':8888/fhd',
+                                    hd: 'http://' + viewerUrlCred + ':8888/hd'
+                                },
+                                rtmp: {
+                                    fhd: 'rtmp://' + viewerUrlCred + '/fhd',
+                                    hd: 'rtmp://' + viewerUrlCred + '/hd'
+                                }
+                            },
+                            actions: {
+                                shutterWrite: server.getAuth().validate(auth.user, auth.password, ['shutter-write']),
+                                rotateWrite: server.getAuth().validate(auth.user, auth.password, ['rotate-write']),
+                                system: server.getAuth().validate(auth.user, auth.password, ['system-write'])
+                            }
+                        }))
+                    }
+                },
+                {
+                    method: 'GET',
                     path: '/rotate',
                     auth: {
+                        required: !config.auth.publicView,
                         roles: ['rotate-read']
                     },
                     async handler(req, res) {
@@ -301,7 +363,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                     method: 'POST',
                     path: '/system',
                     auth: {
-                        roles: ['reboot']
+                        roles: ['system-write']
                     },
                     inputBodySchema: {
                         enum: ['halt', 'reboot']

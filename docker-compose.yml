@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     build:
       context: .
+      dockerfile: Dockerfile-main
     network_mode: host
     privileged: true
     tmpfs: /dev/shm:exec
@@ -14,7 +15,9 @@ services:
       - /proc/sysrq-trigger:/sysrq
   rtsp:
     restart: unless-stopped
-    image: aler9/rtsp-simple-server:latest-rpi
+    build:
+      context: .
+      dockerfile: Dockerfile-rtsp
     #user: nobody
     network_mode: host
     privileged: true

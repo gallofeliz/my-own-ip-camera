@@ -5,6 +5,7 @@ paths:
     sourceOnDemandCloseAfter: 1s
     runOnReady: 'curl -sX POST http://localhost:8199/video-uses-camera'
     runOnReadyRestart: yes
+  hd:
 
 externalAuthenticationURL: 'http://localhost:8199/video-auth'
 rtspAddress: :554
