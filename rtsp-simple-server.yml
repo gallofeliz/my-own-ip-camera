@@ -3,9 +3,9 @@ paths:
     source: rpiCamera
     sourceOnDemand: yes
     sourceOnDemandCloseAfter: 1s
-    runOnReady: 'curl -sX POST http://localhost/internal/video-uses-camera'
+    runOnReady: 'curl -sX POST http://localhost:8199/video-uses-camera'
     runOnReadyRestart: yes
 
-externalAuthenticationURL: 'http://localhost/internal/video-auth'
+externalAuthenticationURL: 'http://localhost:8199/video-auth'
 rtspAddress: :554
 api: true

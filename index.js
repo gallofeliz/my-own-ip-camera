@@ -156,15 +156,15 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         })
     }
 
-    const server = new HttpServer({
-        port: 80,
+    const internalServer = new HttpServer({
+        port: 8199,
+        host: '127.0.0.1',
         logger,
-        webUiFilesPath: 'ui',
         api: {
             routes: [
                 {
                     method: 'POST',
-                    path: '/internal/video-uses-camera',
+                    path: '/video-uses-camera',
                     async handler(req, res) {
                         setCameraBusy('video')
 
@@ -175,21 +175,58 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 },
                 {
                     method: 'POST',
-                    path: '/internal/video-auth',
+                    path: '/video-auth',
                     async handler(req, res) {
                         if (req.body.action !== 'read') {
                             res.status(401).end()
                         }
-                        if (req.body.user === '') {
-                            // No auth
+
+                        if (!server.getAuth().validate(req.body.user, req.body.password, ['view'])) {
+                            res.status(401).end()
                         }
                         // .password .path
                         res.status(201).end()
                     }
+                }
+            ]
+        }
+    })
+
+    const server = new HttpServer({
+        port: 80,
+        logger,
+        auth: {
+            users: [
+                {
+                    username: 'viewer',
+                    password: 'viewer',
+                    roles: ['view', 'shutter-read']
                 },
+                {
+                    username: 'admin',
+                    password: 'admin',
+                    roles: ['all']
+                }
+            ],
+            extendedRoles: {
+                shutter: ['shutter-read', 'shutter-write'],
+                all: ['view', 'shutter', 'reboot', 'flip']
+            }
+        },
+        webUi: {
+            filesPath: 'ui',
+            auth: {
+                required: false
+            }
+        },
+        api: {
+            routes: [
                 {
                     method: 'POST',
                     path: '/flip',
+                    auth: {
+                        roles: ['flip']
+                    },
                     async handler(req, res) {
                         await doFlip()
                         res.status(201).end()
@@ -201,6 +238,9 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                         type: 'string'
                     },
                     path: '/shutter/auto-wait',
+                    auth: {
+                        roles: ['shutter-write']
+                    },
                     async handler(req, res) {
                         state.shutterAutoWaitBeforeClose = req.body
                         res.status(201).end()
@@ -209,6 +249,9 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 {
                     method: 'GET',
                     path: '/shutter/auto-wait',
+                    auth: {
+                        roles: ['shutter-read']
+                    },
                     async handler(req, res) {
                         res.send(JSON.stringify(state.shutterAutoWaitBeforeClose))
                     }
@@ -216,6 +259,9 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 {
                     method: 'POST',
                     path: '/reboot',
+                    auth: {
+                        roles: ['reboot']
+                    },
                     async handler(req, res) {
                         res.status(201).end()
 
@@ -229,6 +275,9 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                     method: 'POST',
                     path: '/shutter',
                     inputBodySchema: { enum: ['open', 'closed', 'auto'] },
+                    auth: {
+                        roles: ['shutter-write']
+                    },
                     async handler(req, res) {
                         if (!shutter) {
                             throw new Error('No Shutter')
@@ -252,6 +301,9 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                         }
                     },
                     path: '/:sizeName(fhd|hd).jpg',
+                    auth: {
+                        roles: ['view']
+                    },
                     async handler(req, res) {
                         const sizeName = req.params.sizeName
 
@@ -309,11 +361,14 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         }
     })
 
+    internalServer.start()
     server.start()
+
     logger.info('My Own Camera IP started. Welcome !')
 
     handleExitSignals(() => {
         logger.info('bye bye')
+        internalServer.stop()
         server.stop()
     })
 
