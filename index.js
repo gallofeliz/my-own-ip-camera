@@ -31,6 +31,29 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                         closedValue: { type: 'number', default: 2.5 }
                     },
                     default: {}
+                },
+                auth: {
+                    type: 'object',
+                    default: {},
+                    properties: {
+                        publicView: { type: 'boolean', default: false },
+                        viewer: {
+                            type: 'object',
+                            default: {},
+                            properties: {
+                                username: { type: 'string', default: 'viewer' },
+                                password: { type: 'string', default: 'viewer' },
+                            }
+                        },
+                        admin: {
+                            type: 'object',
+                            default: {},
+                            properties: {
+                                username: { type: 'string', default: 'admin' },
+                                password: { type: 'string', default: 'admin' },
+                            }
+                        },
+                    }
                 }
             }
         }
@@ -181,8 +204,10 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                             res.status(401).end()
                         }
 
-                        if (!server.getAuth().validate(req.body.user, req.body.password, ['view'])) {
-                            res.status(401).end()
+                        if (!config.auth.publicView) {
+                            if (!server.getAuth().validate(req.body.user, req.body.password, ['view'])) {
+                                res.status(401).end()
+                            }
                         }
                         // .password .path
                         res.status(201).end()
@@ -198,13 +223,13 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         auth: {
             users: [
                 {
-                    username: 'viewer',
-                    password: 'viewer',
+                    username: config.auth.viewer.username,
+                    password: config.auth.viewer.password,
                     roles: ['view', 'shutter-read']
                 },
                 {
-                    username: 'admin',
-                    password: 'admin',
+                    username: config.auth.admin.username,
+                    password: config.auth.admin.username,
                     roles: ['all']
                 }
             ],
@@ -250,6 +275,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                     method: 'GET',
                     path: '/shutter/auto-wait',
                     auth: {
+                        required: !config.auth.publicView,
                         roles: ['shutter-read']
                     },
                     async handler(req, res) {
@@ -302,6 +328,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                     },
                     path: '/:sizeName(fhd|hd).jpg',
                     auth: {
+                        required: !config.auth.publicView,
                         roles: ['view']
                     },
                     async handler(req, res) {

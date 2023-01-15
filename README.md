@@ -10,13 +10,20 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 - Video (one size) RTSP + HLS + RTMP "on demand"
 - Image (snapshot) directly from camera if possible else from video stream (fhd/hd with choose of quality)
 - Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
-- Some possible configurations (especially on shutter, you can deactivate it with env shutter_enabled=false) ; see https://github.com/gallofeliz/js-libs/tree/master/src/config (warning: master to replace to good version)
+- Some possible configurations ; see https://github.com/gallofeliz/js-libs/tree/master/src/config (warning: master to replace to good version)
+  - shutter_enabled=true|false (default true)
+  - shutter_openValue|closeValue=XX (default 12.5/2.5)
+  - auth_publicView=trye|false (default false)
+  - auth_viewer_username|password=XX (default viewer/viewer)
+  - auth_admin_username|password=XX (default admin/admin)
 
 ![](doc/mobile-index.png)
 
 ## Limitations
 
-Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems.
+- Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems.
+- Only FHD video available
+- No ONVIF
 
 ## Environment
 
@@ -46,6 +53,7 @@ dtparam=pwr_led_activelow=off
 
 ## Why not next
 
+- Improve UI with correct auth injected in URLs
 - Empty config for rtsp service, the main service will setup and update it
 - Various sizing for videos
   - With the same application with ffmpeg to publish to other path ?
@@ -57,5 +65,5 @@ dtparam=pwr_led_activelow=off
   - https://www.happytimesoft.com/products/onvif-server/index.html
 - Detect with accelemeter (or similar) camera position and ajust auto flip
 - Add audio
-- Isolate internal / public ports ; put rtsp inside the docker image ? Or better separated (logs are better ;)) ?
+- Put rtsp inside the docker image ? Or better separated (logs are better ;)) ?
 - Add led to say that cam is used ? Maybe we can use RPI already installed led 
