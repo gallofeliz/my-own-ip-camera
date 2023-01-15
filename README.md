@@ -18,7 +18,7 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
   - auth_viewer_username|password=XX (default viewer/viewer)
   - auth_admin_username|password=XX (default admin/admin)
 
-![](doc/mobile-index.png)
+![](doc/ui.png)
 
 ## Limitations
 
