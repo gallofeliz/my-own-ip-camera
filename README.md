@@ -14,7 +14,7 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 - Some possible configurations ; see https://github.com/gallofeliz/js-libs/tree/master/src/config (warning: master to replace to good version)
   - shutter_enabled=true|false (default true)
   - shutter_openValue|closeValue=XX (default 12.5/2.5)
-  - auth_publicView=trye|false (default false)
+  - auth_publicView=true|false (default false)
   - auth_viewer_username|password=XX (default viewer/viewer)
   - auth_admin_username|password=XX (default admin/admin)
 
