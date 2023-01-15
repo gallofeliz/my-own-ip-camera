@@ -53,6 +53,7 @@ dtparam=pwr_led_activelow=off
 
 ## Why not next
 
+- Refactor code
 - Improve UI with correct auth injected in URLs
 - Empty config for rtsp service, the main service will setup and update it
 - Various sizing for videos
