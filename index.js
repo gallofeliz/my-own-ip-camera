@@ -61,8 +61,9 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
 
     const logger = createLogger(config.logs.level)
 
+    // TODO upgrade system ?
     const state = await createPersistantObject(
-        { flip: false, shutterAutoWaitBeforeClose: '0s', shutterMode: 'auto' },
+        { rotate: 'none', shutterAutoWaitBeforeClose: '0s', shutterMode: 'auto' },
         new PersistantObjectFileHandler('/var/lib/cam/state.json')
     )
 
@@ -164,15 +165,15 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         }
     }
 
-    async function doFlip() {
-        state.flip = !state.flip
+    async function rotate(value) {
+        state.rotate = value
 
         await httpRequest({
             method: 'POST',
             url: 'http://127.0.0.1:9997/v1/config/paths/edit/fhd',
             bodyData: {
-                rpiCameraVFlip: state.flip,
-                rpiCameraHFlip: state.flip
+                rpiCameraVFlip: state.rotate === 'reverse',
+                rpiCameraHFlip: state.rotate === 'reverse'
             },
             bodyType: 'json',
             logger,
@@ -225,7 +226,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 {
                     username: config.auth.viewer.username,
                     password: config.auth.viewer.password,
-                    roles: ['view', 'shutter-read']
+                    roles: ['view', 'shutter-read', 'rotate-read']
                 },
                 {
                     username: config.auth.admin.username,
@@ -235,7 +236,8 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
             ],
             extendedRoles: {
                 shutter: ['shutter-read', 'shutter-write'],
-                all: ['view', 'shutter', 'reboot', 'flip']
+                rotate: ['rotate-read', 'rotate-write'],
+                all: ['view', 'shutter', 'reboot', 'rotate']
             }
         },
         webUi: {
@@ -248,13 +250,26 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
             routes: [
                 {
                     method: 'POST',
-                    path: '/flip',
+                    path: '/rotate',
                     auth: {
-                        roles: ['flip']
+                        roles: ['rotate-write']
+                    },
+                    inputBodySchema: {
+                        enum: ['none', 'counterclockwise', 'clockwise', 'reverse']
                     },
                     async handler(req, res) {
-                        await doFlip()
+                        await rotate(req.body)
                         res.status(201).end()
+                    }
+                },
+                {
+                    method: 'GET',
+                    path: '/rotate',
+                    auth: {
+                        roles: ['rotate-read']
+                    },
+                    async handler(req, res) {
+                        res.send(JSON.stringify(state.rotate))
                     }
                 },
                 {
@@ -284,15 +299,23 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                 },
                 {
                     method: 'POST',
-                    path: '/reboot',
+                    path: '/system',
                     auth: {
                         roles: ['reboot']
+                    },
+                    inputBodySchema: {
+                        enum: ['halt', 'reboot']
                     },
                     async handler(req, res) {
                         res.status(201).end()
 
+                        const mapping = {
+                            halt: 'o',
+                            reboot: 'b'
+                        }
+
                         await runProcess({
-                            command: 'echo b > /sysrq',
+                            command: 'echo '+mapping[req.body]+' > /sysrq',
                             logger
                         }, true)
                     }
@@ -353,14 +376,18 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                             await runProcess({
                                 command: [
                                     'ffmpeg',
-                                    '-i', 'http://localhost:8888/fhd/stream.m3u8',
+                                    '-i', 'http://' + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost:8888/fhd/stream.m3u8',
                                     '-ss', '00:00:01.500',
                                     '-f', 'image2',
                                     '-frames:v', '1',
-                                    '-vf', 'scale=' + size.join(':'),
-                                    '-q:v', ffmpegQuality,
-                                    '-'
-                                ],
+                                    '-vf', 'scale=' + size.join(':')
+                                ].concat(
+                                    state.rotate.includes('clockwise')
+                                        ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)]
+                                        : []
+                                )
+                                .concat(['-q:v', ffmpegQuality, '-']
+                                ),
                                 logger,
                                 outputStream: res
                             }, true)
@@ -374,7 +401,13 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                                         '--width', size[0],
                                         '--height', size[1],
                                         '-n', '-o', '-', '-q', quality, '-t', 5
-                                    ].concat(state.flip ? ['--hflip', '1', '--vflip', '1']: []),
+                                    ].concat(state.rotate === 180 ? ['--hflip', '1', '--vflip', '1']: [])
+                                    .concat(
+                                        state.rotate.includes('clockwise')
+                                            ? ['|', 'ffmpeg', '-i', '-','-f', 'image2', '-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2), '-']
+                                            : []
+                                        )
+                                    .join(' '),
                                     logger,
                                     outputStream: res
                                 }, true)

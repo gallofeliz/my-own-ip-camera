@@ -9,6 +9,7 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 - Go to http://camHostOrIP/ to have URLS and actions
 - Video (one size) RTSP + HLS + RTMP "on demand"
 - Image (snapshot) directly from camera if possible else from video stream (fhd/hd with choose of quality)
+- Rotation (each 90°)
 - Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
 - Some possible configurations ; see https://github.com/gallofeliz/js-libs/tree/master/src/config (warning: master to replace to good version)
   - shutter_enabled=true|false (default true)
@@ -22,8 +23,9 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 ## Limitations
 
 - Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems.
-- Only FHD video available
-- No ONVIF
+- Only FHD video available yet
+- No ONVIF yet
+- No -90/90° video rotation yet
 
 ## Environment
 
@@ -64,7 +66,7 @@ dtparam=pwr_led_activelow=off
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
   - https://www.happytimesoft.com/products/onvif-server/index.html
-- Detect with accelemeter (or similar) camera position and ajust auto flip
+- Detect with accelemeter (or similar) camera position and ajust auto rotate
 - Add audio
 - Put rtsp inside the docker image ? Or better separated (logs are better ;)) ?
 - Add led to say that cam is used ? Maybe we can use RPI already installed led 

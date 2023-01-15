@@ -23,8 +23,9 @@
         <li><button onclick="shutter('open')">Open Shutter</button></li>
         <li><button onclick="shutter('closed')">Close Shutter</button></li>
         <li id="autoshutter"><button onclick="shutter('auto')">Auto Shutter</button> <input type="text" value="(unknown)" /></li>
-        <li><button onclick="flip()">Flip</button></li>
-        <li><button onclick="reboot()">Reboot</button></li>
+        <li id="rotate"><button onclick="rotate()">Rotate</button> <select><option>none</option><option>counterclockwise</option><option>clockwise</option><option>reverse</option></select></li>
+        <li><button onclick="system('reboot')">Reboot</button></li>
+        <li><button onclick="system('halt')">Halt</button></li>
     </ul>
 
     <script type="text/javascript">
@@ -41,8 +42,12 @@
             document.querySelector('#jpg a').href=link
         }
 
-        async function flip() {
-            await _fetch('flip', { method: 'POST' })
+        async function rotate() {
+            await _fetch('rotate', {
+                method: 'POST',
+                body: JSON.stringify(document.querySelector('#rotate select').value),
+                headers: { 'Content-Type': 'application/json' }
+            })
         }
 
         (async () => {
@@ -55,9 +60,21 @@
             document.querySelector('#autoshutter input').value = v
         })();
 
-        async function reboot() {
-            await _fetch('reboot', {
-                method: 'POST'
+        (async () => {
+            const e = await _fetch('rotate', {
+                method: 'GET'
+            })
+
+            const v = await e.json()
+
+            document.querySelector('#rotate select').value = v
+        })();
+
+        async function system(cmd) {
+            await _fetch('system', {
+                method: 'POST',
+                body: JSON.stringify(cmd),
+                headers: { 'Content-Type': 'application/json' }
             })
         }
 
