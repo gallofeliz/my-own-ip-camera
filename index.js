@@ -376,8 +376,9 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                             await runProcess({
                                 command: [
                                     'ffmpeg',
+                                    '-hide_banner', '-loglevel', 'error',
                                     '-i', 'http://' + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost:8888/fhd/stream.m3u8',
-                                    '-ss', '00:00:01.500',
+                                    '-ss', '00:00:01.000',
                                     '-f', 'image2',
                                     '-frames:v', '1',
                                     '-vf', 'scale=' + size.join(':')
@@ -404,7 +405,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                                     ].concat(state.rotate === 180 ? ['--hflip', '1', '--vflip', '1']: [])
                                     .concat(
                                         state.rotate.includes('clockwise')
-                                            ? ['|', 'ffmpeg', '-i', '-','-f', 'image2', '-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2), '-']
+                                            ? ['|', 'ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', '-','-f', 'image2', '-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2), '-']
                                             : []
                                         )
                                     .join(' '),
