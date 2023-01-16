@@ -404,6 +404,11 @@ const { writeFile } = require('fs/promises')
                             ? host
                             : encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password) + '@' + host
 
+                        const viewerQueryCred = config.auth.publicView
+                            ? ''
+                            : '?user=' + encodeURIComponent(config.auth.viewer.username)+'&pass='+encodeURIComponent(config.auth.viewer.password)
+
+
                         const auth = req.auth || {}
 
                         res.send(JSON.stringify({
@@ -421,8 +426,8 @@ const { writeFile } = require('fs/promises')
                                     hd: 'http://' + viewerUrlCred + ':8888/hd'
                                 },
                                 rtmp: {
-                                    fhd: 'rtmp://' + viewerUrlCred + '/fhd',
-                                    hd: 'rtmp://' + viewerUrlCred + '/hd'
+                                    fhd: 'rtmp://' + host + '/fhd' + viewerQueryCred,
+                                    hd: 'rtmp://' + host + '/hd' + viewerQueryCred
                                 }
                             },
                             actions: {
