@@ -7,6 +7,7 @@ const httpRequest = require('@gallofeliz/js-libs/http-request').default
 const { durationToMilliSeconds } = require('@gallofeliz/js-libs/utils')
 const loadConfig = require('@gallofeliz/js-libs/config').default
 const { PersistantObjectFileHandler, default:createPersistantObject } = require('@gallofeliz/js-libs/persistant-object')
+const { writeFile } = require('fs/promises')
 
 ;(async () => {
 
@@ -31,6 +32,13 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                         closedValue: { type: 'number', default: 2.5 }
                     },
                     default: {}
+                },
+                leds: {
+                    type: 'object',
+                    default: {},
+                    properties: {
+                        enabled: { type: 'boolean', default: false }
+                    }
                 },
                 auth: {
                     type: 'object',
@@ -60,6 +68,64 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
     })
 
     const logger = createLogger(config.logs.level)
+
+    class Led {
+        constructor(path) {
+            this.path = path
+            this.state = false
+        }
+        async getState() {
+            return this.state
+        }
+        async on() {
+            await this.setState(true)
+        }
+        async off() {
+            await this.setState(false)
+        }
+        async flip() {
+            await this.setState(!this.state)
+        }
+        async setState(state) {
+            const value = state ? 1 : 0
+            await writeFile(this.path, value.toString())
+            this.state = state
+        }
+    }
+
+    class LedsBlinker {
+        constructor(leds) {
+            this.leds = leds
+            this.intervalFn = null
+        }
+        startBlink() {
+            if (this.intervalFn) {
+                return
+            }
+            this.intervalFn = setInterval(() => this.blink(false), 500)
+            this.blink(true)
+        }
+        stopBlink() {
+            clearInterval(this.intervalFn)
+            this.intervalFn = null
+            this.leds.forEach(led => led.off())
+        }
+        blink(initial) {
+            if (initial) {
+                this.leds.forEach((led, index) => {
+                    index % 2 === 0 ? led.on() : led.off()
+                })
+                return
+            }
+
+            this.leds.forEach(led => led.flip())
+        }
+    }
+
+    const blinker = config.leds.enabled && new LedsBlinker([
+        new Led('/sys/class/leds/led0/brightness'),
+        new Led('/sys/class/leds/led1/brightness')
+    ])
 
     const state = await createPersistantObject(
         { rotate: 'none', shutterAutoWaitBeforeClose: '0s', shutterMode: 'auto' },
@@ -113,6 +179,10 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
             }
         }
 
+        close() {
+            this.putHardwareShutter(false)
+        }
+
         async putHardwareShutter(open) {
             // Avoid collisions with promise "queue"
             await (this.currentRunningShutter = (this.currentRunningShutter || Promise.resolve())
@@ -158,6 +228,14 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         cameraIsBusyBy = whoUseIt
 
         logger.info('Camera busy', { cameraIsBusyBy })
+
+        if (blinker) {
+            if (cameraIsBusy) {
+                blinker.startBlink()
+            } else {
+                blinker.stopBlink()
+            }
+        }
 
         if (shutter) {
             await shutter.onCameraBusyChange(cameraIsBusy)
@@ -525,6 +603,12 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
         logger.info('bye bye')
         internalServer.stop()
         server.stop()
+        if (blinker) {
+            blinker.stopBlink()
+        }
+        if (shutter) {
+            shutter.close()
+        }
     })
 
 })()

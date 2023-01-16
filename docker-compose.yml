@@ -13,6 +13,8 @@ services:
       - /run/udev:/run/udev:ro
       - cam:/var/lib/cam
       - /proc/sysrq-trigger:/sysrq
+      - /sys/class/leds/led0/brightness:/sys/class/leds/led0/brightness
+      - /sys/class/leds/led1/brightness:/sys/class/leds/led1/brightness
   rtsp:
     restart: unless-stopped
     build:

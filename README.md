@@ -11,12 +11,14 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 - Image (snapshot) directly from camera if possible else from video stream (fhd/hd with choose of quality)
 - Rotation (each 90°)
 - Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
+- Leds : if activated, the built-in leds will blink when camera is used (with the shutter, we don't want somebody see us without our knowledge)
 - Some possible configurations ; see https://github.com/gallofeliz/js-libs/tree/master/src/config (warning: master to replace to good version)
   - shutter_enabled=true|false (default true)
   - shutter_openValue|closeValue=XX (default 12.5/2.5)
   - auth_publicView=true|false (default false)
   - auth_viewer_username|password=XX (default viewer/viewer)
   - auth_admin_username|password=XX (default admin/admin)
+  - leds_enabled=true|false (default false)
 - Get infos on `http://user:pass@192.168.1.16/infos` (default viewer:viewer for viewer and admin:admin for admin) ; response will depend on anonymous/logged user
 ```json
 {
@@ -50,7 +52,7 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 
 ## Limitations
 
-- Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems.
+- Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems, and for Raspberry PI I would like to support USB cameras.
 - No ONVIF yet
 
 ## Environment
@@ -80,17 +82,16 @@ dtparam=pwr_led_activelow=off
 `./deploy.sh $camHostOrIp`
 
 ## Why not next
-
 - Improve FHD/HD videos :
   - Reduce ffmpeg CPU footprint (use HLS ? Other ?)
-  - Change all the config on rotate change (rename source to fhd if no clockwise)
+  - Change all the config on rotate change (rename source to fhd if no clockwise) -> why not put rstp component inside the same container and start it with the app ; and/or put all the config from the app (as centralized point)
 - Refactor code
-- Empty config for rtsp service, the main service will setup and update it
 - Add time/date in frames ?
+- Support USB cameras ?
+
+## Will not be done for the moment
+- Detect with accelemeter (or similar) camera position and ajust auto rotate
+- Add audio
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
   - https://www.happytimesoft.com/products/onvif-server/index.html
-- Detect with accelemeter (or similar) camera position and ajust auto rotate
-- Add audio
-- Put rtsp inside the docker image ? Or better separated (logs are better ;)) ?
-- Add led to say that cam is used ? Maybe we can use RPI already installed led 
