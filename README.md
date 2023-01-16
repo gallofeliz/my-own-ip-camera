@@ -52,7 +52,6 @@ A free docker stack to transform a device with camera (+ servomotor) with IP Cam
 
 - Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems.
 - No ONVIF yet
-- No -90/90° video rotation yet
 
 ## Environment
 
@@ -82,6 +81,9 @@ dtparam=pwr_led_activelow=off
 
 ## Why not next
 
+- Improve FHD/HD videos :
+  - Reduce ffmpeg CPU footprint (use HLS ? Other ?)
+  - Change all the config on rotate change (rename source to fhd if no clockwise)
 - Refactor code
 - Empty config for rtsp service, the main service will setup and update it
 - Add time/date in frames ?

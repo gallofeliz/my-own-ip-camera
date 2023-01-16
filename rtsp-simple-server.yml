@@ -1,10 +1,11 @@
 paths:
-  fhd:
+  source:
     source: rpiCamera
     sourceOnDemand: yes
     sourceOnDemandCloseAfter: 1s
     runOnReady: 'curl -sX POST http://localhost:8199/video-uses-camera'
     runOnReadyRestart: yes
+  fhd:
   hd:
 
 externalAuthenticationURL: 'http://localhost:8199/video-auth'

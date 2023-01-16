@@ -165,11 +165,15 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
     }
 
     async function rotate(value) {
+        if (state.rotate === value) {
+            return
+        }
+
         state.rotate = value
 
         await httpRequest({
             method: 'POST',
-            url: 'http://127.0.0.1:9997/v1/config/paths/edit/fhd',
+            url: 'http://127.0.0.1:9997/v1/config/paths/edit/source',
             bodyData: {
                 rpiCameraVFlip: state.rotate === 'reverse',
                 rpiCameraHFlip: state.rotate === 'reverse'
@@ -177,22 +181,42 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
             bodyType: 'json',
             logger,
         })
+
+        await configureRtspStreams()
     }
 
-    (async () => {
+    async function configureRtspStreams() {
+        const transposeStr = state.rotate.includes('clockwise')
+            ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)].join(' ')
+            : ''
+
+        await httpRequest({
+            method: 'POST',
+            url: 'http://127.0.0.1:9997/v1/config/paths/edit/fhd',
+            bodyData: {
+                runOnDemand: 'ffmpeg -hide_banner -loglevel error -i rtsp://'
+                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)
+                    +'@localhost/source '+transposeStr+' -f rtsp rtsp://'
+                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost/fhd'
+            },
+            bodyType: 'json',
+            logger,
+        })
         await httpRequest({
             method: 'POST',
             url: 'http://127.0.0.1:9997/v1/config/paths/edit/hd',
             bodyData: {
                 runOnDemand: 'ffmpeg -hide_banner -loglevel error -i rtsp://'
                     + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)
-                    +'@localhost/fhd -vf scale=1280:720 -pix_fmt yuv420p -c:v libx264 -preset ultrafast -b:v 600k -max_muxing_queue_size 1024 -f rtsp rtsp://'
+                    +'@localhost/source -vf scale=1280:720 '+transposeStr+' -pix_fmt yuv420p -c:v libx264 -preset ultrafast -b:v 600k -max_muxing_queue_size 1024 -f rtsp rtsp://'
                     + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost/hd'
             },
             bodyType: 'json',
             logger,
         })
-    })
+    }
+
+    configureRtspStreams()
 
     const internalServer = new HttpServer({
         port: 8199,
@@ -215,17 +239,25 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                     method: 'POST',
                     path: '/video-auth',
                     async handler(req, res) {
-                        if (req.body.action === 'publish' && req.body.path === 'hd' && ['::1', '127.0.0.1'].includes(req.body.ip)) {
+                        if (req.body.action === 'publish' && ['hd', 'fhd'].includes(req.body.path) && ['::1', '127.0.0.1'].includes(req.body.ip)) {
                             res.status(201).end()
+                            return
                         }
 
                         if (req.body.action !== 'read') {
                             res.status(401).end()
+                            return
+                        }
+
+                        if (req.body.path === 'source' && !['::1', '127.0.0.1'].includes(req.body.ip)) {
+                            res.status(401).end()
+                            return
                         }
 
                         if (!config.auth.publicView) {
                             if (!server.getAuth().validate(req.body.user, req.body.password, ['view'])) {
                                 res.status(401).end()
+                                return
                             }
                         }
 
@@ -439,7 +471,7 @@ const { PersistantObjectFileHandler, default:createPersistantObject } = require(
                                 command: [
                                     'ffmpeg',
                                     '-hide_banner', '-loglevel', 'error',
-                                    '-i', 'http://' + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost:8888/fhd/stream.m3u8',
+                                    '-i', 'http://' + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost:8888/source/stream.m3u8',
                                     '-ss', '00:00:01.000',
                                     '-f', 'image2',
                                     '-frames:v', '1',
