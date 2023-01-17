@@ -1,5 +1,16 @@
 # My Own IP Camera
 
+## *Infos*
+
+I had a lot of problems after adding rotation that needs post-processing. This feature is important for me, so I will adapt all the stack for that, and thanks to post processing, I also can add timestamp text in video.
+
+I am working on it :
+- Reactivate HLS, RTMP stream + already supported RTSP
+- Orientation and timestamp
+- No more consumer FHD/HD choice. Only 1 stream by type will be available, FHD/HD will be configurable in the UI for all streams. I think it fits a lot of cases and reduce complexity and CPU usage problems.
+- Stabilisation / refactoring
+- branch : https://github.com/gallofeliz/my-own-ip-camera/tree/wip
+
 ## Description
 
 A free docker stack to transform a device with camera (+ servomotor) with IP Camera.
