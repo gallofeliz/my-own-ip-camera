@@ -10,6 +10,3 @@ paths:
 
 externalAuthenticationURL: 'http://localhost:8199/video-auth'
 rtspAddress: :554
-hlsDisable: yes
-rtmpDisable: yes
-webrtcDisable: yes

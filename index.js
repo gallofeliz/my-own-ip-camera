@@ -269,7 +269,7 @@ const { writeFile } = require('fs/promises')
                     path: '/request-stream/fhd',
                     async handler(req, res) {
                         const transposeStr = state.rotate.includes('clockwise')
-                            ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)].join(' ')
+                            ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2), '-c:v libx264'].join(' ')
                             : '-vcodec copy'
 
                         const flipStr = state.rotate === 180 ? '--hflip 1 --vflip 1' : ''
@@ -296,7 +296,11 @@ const { writeFile } = require('fs/promises')
                     async handler(req, res) {
 
                         const transposeStr = state.rotate.includes('clockwise')
-                            ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)].join(' ')
+                            ? [
+                                //'-filter:v fps=1',
+                                '-vf \'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)+', drawtext=fontsize=(h/30): text=%{localtime}: fontcolor=white@0.8: x=7: y=7\'',
+                                /*'-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2),*/, '-c:v libx264'
+                            ].join(' ')
                             : '-vcodec copy'
 
                         const flipStr = state.rotate === 180 ? '--hflip 1 --vflip 1' : ''
@@ -335,6 +339,7 @@ const { writeFile } = require('fs/promises')
                     path: '/video-auth',
                     async handler(req, res) {
                         res.status(201).end()
+                        return
                         if (req.body.action === 'publish' && ['hd', 'fhd'].includes(req.body.path) && ['::1', '127.0.0.1'].includes(req.body.ip)) {
                             res.status(201).end()
                             return
