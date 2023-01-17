@@ -4,10 +4,6 @@
 
 A free docker stack to transform a device with camera (+ servomotor) with IP Camera.
 
-## Warning
-
-After adding rotation, rtmp and hls don't work anymore. I am working on it (maybe I will remove them to put concentration on RTSP)
-
 ## Features
 
 - Go to http://camHostOrIP/ to have URLS and actions
