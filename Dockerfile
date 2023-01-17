@@ -15,7 +15,9 @@ ADD package.json package-lock.json ./
 
 RUN npm i
 
-ADD index.js shutter.py ./
+RUN curl -L -o - https://github.com/aler9/rtsp-simple-server/releases/download/v0.21.1/rtsp-simple-server_v0.21.1_linux_armv7.tar.gz | tar -xz
+
+ADD index.js shutter.py rtsp-simple-server.yml ./
 ADD ui ui
 
 VOLUME /var/lib/cam

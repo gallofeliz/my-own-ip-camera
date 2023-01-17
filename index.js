@@ -242,6 +242,12 @@ const { writeFile } = require('fs/promises')
         }
     }
 
+    runProcess({
+        command: ['./rtsp-simple-server'],
+        env: process.env,
+        logger
+    })
+
     async function rotate(value) {
         if (state.rotate === value) {
             return
@@ -249,52 +255,8 @@ const { writeFile } = require('fs/promises')
 
         state.rotate = value
 
-        await httpRequest({
-            method: 'POST',
-            url: 'http://127.0.0.1:9997/v1/config/paths/edit/source',
-            bodyData: {
-                rpiCameraVFlip: state.rotate === 'reverse',
-                rpiCameraHFlip: state.rotate === 'reverse'
-            },
-            bodyType: 'json',
-            logger,
-        })
-
-        await configureRtspStreams()
+        // To do stop the stream to force refresh
     }
-
-    async function configureRtspStreams() {
-        const transposeStr = state.rotate.includes('clockwise')
-            ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)].join(' ')
-            : ''
-
-        await httpRequest({
-            method: 'POST',
-            url: 'http://127.0.0.1:9997/v1/config/paths/edit/fhd',
-            bodyData: {
-                runOnDemand: 'ffmpeg -hide_banner -loglevel error -i rtsp://'
-                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)
-                    +'@localhost/source '+transposeStr+' -f rtsp rtsp://'
-                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost/fhd'
-            },
-            bodyType: 'json',
-            logger,
-        })
-        await httpRequest({
-            method: 'POST',
-            url: 'http://127.0.0.1:9997/v1/config/paths/edit/hd',
-            bodyData: {
-                runOnDemand: 'ffmpeg -hide_banner -loglevel error -i rtsp://'
-                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)
-                    +'@localhost/source -vf scale=1280:720 '+transposeStr+' -pix_fmt yuv420p -c:v libx264 -preset ultrafast -b:v 600k -max_muxing_queue_size 1024 -f rtsp rtsp://'
-                    + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost/hd'
-            },
-            bodyType: 'json',
-            logger,
-        })
-    }
-
-    configureRtspStreams()
 
     const internalServer = new HttpServer({
         port: 8199,
@@ -302,6 +264,61 @@ const { writeFile } = require('fs/promises')
         logger,
         api: {
             routes: [
+                {
+                    method: 'POST',
+                    path: '/request-stream/fhd',
+                    async handler(req, res) {
+                        const transposeStr = state.rotate.includes('clockwise')
+                            ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)].join(' ')
+                            : '-vcodec copy'
+
+                        const flipStr = state.rotate === 180 ? '--hflip 1 --vflip 1' : ''
+
+                        setCameraBusy('video-fhd')
+                        const ac = new AbortController
+
+                        runProcess({
+                            command: 'libcamera-vid -t 0 --mode 1920:1080 --width 1920 --height 1080 '+flipStr+' -o - '
+                            + '| ffmpeg -hide_banner -loglevel error -f h264 -i - '+transposeStr+' -f rtsp rtsp://localhost/fhd',
+                            logger,
+                            abortSignal: ac.signal
+                        })
+
+                        req.once('close', () => {
+                            ac.abort()
+                            setCameraBusy(null)
+                        })
+                    }
+                },
+                {
+                    method: 'POST',
+                    path: '/request-stream/hd',
+                    async handler(req, res) {
+
+                        const transposeStr = state.rotate.includes('clockwise')
+                            ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)].join(' ')
+                            : '-vcodec copy'
+
+                        const flipStr = state.rotate === 180 ? '--hflip 1 --vflip 1' : ''
+
+                        setCameraBusy('video-hd')
+                        const ac = new AbortController
+
+                        // TODO if camera already busy by fhd, why not use fhd stream as input
+
+                        runProcess({
+                            command: 'libcamera-vid -t 0 --mode 1280:720 --width 1280 --height 720 '+flipStr+' -o - '
+                            + '| ffmpeg -hide_banner -loglevel error -f h264 -i - '+transposeStr+' -f rtsp rtsp://localhost/hd',
+                            logger,
+                            abortSignal: ac.signal
+                        })
+
+                        req.once('close', () => {
+                            ac.abort()
+                            setCameraBusy(null)
+                        })
+                    }
+                },
                 {
                     method: 'POST',
                     path: '/video-uses-camera',
@@ -317,17 +334,13 @@ const { writeFile } = require('fs/promises')
                     method: 'POST',
                     path: '/video-auth',
                     async handler(req, res) {
+                        res.status(201).end()
                         if (req.body.action === 'publish' && ['hd', 'fhd'].includes(req.body.path) && ['::1', '127.0.0.1'].includes(req.body.ip)) {
                             res.status(201).end()
                             return
                         }
 
                         if (req.body.action !== 'read') {
-                            res.status(401).end()
-                            return
-                        }
-
-                        if (req.body.path === 'source' && !['::1', '127.0.0.1'].includes(req.body.ip)) {
                             res.status(401).end()
                             return
                         }
@@ -417,18 +430,8 @@ const { writeFile } = require('fs/promises')
                                 hd: 'http://' + viewerUrlCred + '/hd.jpg',
                             },
                             videoUrls: {
-                                rtsp: {
-                                    fhd: 'rtsp://' + viewerUrlCred + '/fhd',
-                                    hd: 'rtsp://' + viewerUrlCred + '/hd'
-                                },
-                                hls: {
-                                    fhd: 'http://' + viewerUrlCred + ':8888/fhd',
-                                    hd: 'http://' + viewerUrlCred + ':8888/hd'
-                                },
-                                rtmp: {
-                                    fhd: 'rtmp://' + host + '/fhd' + viewerQueryCred,
-                                    hd: 'rtmp://' + host + '/hd' + viewerQueryCred
-                                }
+                                fhd: 'rtsp://' + viewerUrlCred + '/fhd',
+                                hd: 'rtsp://' + viewerUrlCred + '/hd'
                             },
                             actions: {
                                 shutterWrite: server.getAuth().validate(auth.user, auth.password, ['shutter-write']),
@@ -550,22 +553,19 @@ const { writeFile } = require('fs/promises')
                         // Use video stream if already busy by it
                         // But also if too many requests on image endpoint
                         if (cameraIsBusy || forceVideoSource) {
+                            const input = 'rtsp://' + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost/'
+                                + (cameraIsBusy && cameraIsBusyBy === 'video-hd' ? 'hd' : 'fhd')
                             await runProcess({
                                 command: [
                                     'ffmpeg',
                                     '-hide_banner', '-loglevel', 'error',
-                                    '-i', 'http://' + encodeURIComponent(config.auth.viewer.username)+':'+encodeURIComponent(config.auth.viewer.password)+'@localhost:8888/source/stream.m3u8',
+                                    '-i', input,
                                     '-ss', '00:00:01.000',
                                     '-f', 'image2',
                                     '-frames:v', '1',
-                                    '-vf', 'scale=' + size.join(':')
-                                ].concat(
-                                    state.rotate.includes('clockwise')
-                                        ? ['-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2)]
-                                        : []
-                                )
-                                .concat(['-q:v', ffmpegQuality, '-']
-                                ),
+                                    '-vf', 'scale=' + (state.rotate.includes('clockwise') ? size.reverse().join(':') : size.join(':')),
+                                    '-q:v', ffmpegQuality, '-'
+                                ],
                                 logger,
                                 outputStream: res
                             }, true)
@@ -579,7 +579,7 @@ const { writeFile } = require('fs/promises')
                                         '--width', size[0],
                                         '--height', size[1],
                                         '-n', '-o', '-', '-q', quality, '-t', 5
-                                    ].concat(state.rotate === 180 ? ['--hflip', '1', '--vflip', '1']: [])
+                                    ].concat(state.rotate === 'flip' ? ['--hflip', '1', '--vflip', '1']: [])
                                     .concat(
                                         state.rotate.includes('clockwise')
                                             ? ['|', 'ffmpeg', '-hide_banner', '-loglevel', 'error', '-i', '-','-f', 'image2', '-vf', 'transpose=' + (state.rotate === 'clockwise' ? 1 : 2), '-']

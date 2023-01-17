@@ -17,9 +17,7 @@
             <select onchange="updateJpgLink()"><option value="fhd">FHD</option><option value="hd">HD</option></select>
             <input type="range" min="1" max="100" onchange="updateJpgLink()" value="90">
         </li>
-        <li id="hls"><a href="(unknown)">HLS video</a> <select onchange="updateVideoLink('hls')"><option value="fhd">FHD</option><option value="hd">HD</option></select></li>
         <li id="rtsp"><a href="(unknown)">RTSP video</a> <select onchange="updateVideoLink('rtsp')"><option value="fhd">FHD</option><option value="hd">HD</option></select></li>
-        <li id="rtmp"><a href="(unknown)">RTMP video</a> <select onchange="updateVideoLink('rtmp')"><option value="fhd">FHD</option><option value="hd">HD</option></select></li>
         <li id="shutteropen"><button onclick="shutter('open')">Open Shutter</button></li>
         <li id="shutterclose"><button onclick="shutter('closed')">Close Shutter</button></li>
         <li id="autoshutter"><button onclick="shutter('auto')">Auto Shutter</button> <input type="text" value="(unknown)" /></li>
@@ -29,8 +27,8 @@
     </ul>
 
     <script type="text/javascript">
-        function updateVideoLink(protocol) {
-            document.querySelector('#' + protocol + ' a').href = uiData.videoUrls[protocol][document.querySelector('#' + protocol + ' select').value]
+        function updateVideoLink() {
+            document.querySelector('#rtsp a').href = uiData.videoUrls[document.querySelector('#rtsp select').value]
         }
 
         function updateJpgLink() {
@@ -62,9 +60,7 @@
             uiData = await e.json()
 
             updateJpgLink()
-            updateVideoLink('hls')
-            updateVideoLink('rtmp')
-            updateVideoLink('rtsp')
+            updateVideoLink()
 
             if (!uiData.actions.shutterWrite) {
                 document.querySelector('#shutteropen button').disabled = true

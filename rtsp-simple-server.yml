@@ -1,13 +1,15 @@
 paths:
-  source:
-    source: rpiCamera
-    sourceOnDemand: yes
-    sourceOnDemandCloseAfter: 1s
-    runOnReady: 'curl -sX POST http://localhost:8199/video-uses-camera'
-    runOnReadyRestart: yes
   fhd:
+    runOnDemand: 'curl -sX POST http://localhost:8199/request-stream/fhd'
+    runOnDemandRestart: yes
+    sourceOnDemandCloseAfter: 1s
   hd:
+    runOnDemand: 'curl -sX POST http://localhost:8199/request-stream/hd'
+    runOnDemandRestart: yes
+    sourceOnDemandCloseAfter: 1s
 
 externalAuthenticationURL: 'http://localhost:8199/video-auth'
 rtspAddress: :554
-api: true
+hlsDisable: yes
+rtmpDisable: yes
+webrtcDisable: yes

@@ -11,7 +11,7 @@ After adding rotation, rtmp and hls don't work anymore. I am working on it (mayb
 ## Features
 
 - Go to http://camHostOrIP/ to have URLS and actions
-- Video RTSP + HLS + RTMP "on demand" (fhd/hd)
+- Video RTSP "on demand" (fhd/hd) => No more HLS/RTMP
 - Image (snapshot) directly from camera if possible else from video stream (fhd/hd with choose of quality)
 - Rotation (each 90°)
 - Shutter (hide the camera) open/close/auto, when auto open the shutter on snapshot and close after (with delay to avoid too openings in case of recording)
@@ -31,18 +31,8 @@ After adding rotation, rtmp and hls don't work anymore. I am working on it (mayb
     "hd": "http://viewer:viewer@192.168.1.16/hd.jpg"
   },
   "videoUrls": {
-    "rtsp": {
-      "fhd": "rtsp://viewer:viewer@192.168.1.16/fhd",
-      "hd": "rtsp://viewer:viewer@192.168.1.16/hd"
-    },
-    "hls": {
-      "fhd": "http://viewer:viewer@192.168.1.16:8888/fhd",
-      "hd": "http://viewer:viewer@192.168.1.16:8888/hd"
-    },
-    "rtmp": {
-      "fhd": "rtmp://viewer:viewer@192.168.1.16/fhd",
-      "hd": "rtmp://viewer:viewer@192.168.1.16/hd"
-    }
+    "fhd": "rtsp://viewer:viewer@192.168.1.16/fhd",
+    "hd": "rtsp://viewer:viewer@192.168.1.16/hd"
   },
   "actions": {
     "shutterWrite": false,
@@ -58,6 +48,8 @@ After adding rotation, rtmp and hls don't work anymore. I am working on it (mayb
 
 - Currently Raspberry PI with its camera is supported. We can easily isolate the services and have differents images for differents systems, and for Raspberry PI I would like to support USB cameras.
 - No ONVIF yet
+- No more HLS nor RTMP. I will not spend more time on that (rtsp-simple-server does so good the job :'( but does not allow postprocessing before putting in HLS/RTMP). I prefer to reduce the scope today because this project eats my time too much.
+- You cannot use fhd/hd stream in the same time
 
 ## Environment
 
@@ -86,11 +78,10 @@ dtparam=pwr_led_activelow=off
 `./deploy.sh $camHostOrIp`
 
 ## Why not next
-- Improve FHD/HD videos :
-  - Reduce ffmpeg CPU footprint (use HLS ? Other ?)
-  - Change all the config on rotate change (rename source to fhd if no clockwise) -> why not put rstp component inside the same container and start it with the app ; and/or put all the config from the app (as centralized point)
-- Refactor code
-- Add time/date in frames ?
+- Refresh RTSP stream on change rotate
+- Allow both fhd/hd or put size as state parameter and KISS (why not state config for images and videos with jpg quality too) ; no more mind "Multiconsumers with differents needs" but just multi consumers
+- Refactor code, split modules, reduce useless transformations
+- Add time/date in frames ? => Yes, now that we use always ffmpeg, we can !
 - Support USB cameras ?
 
 ## Will not be done for the moment
@@ -99,3 +90,4 @@ dtparam=pwr_led_activelow=off
 - Add Onvif endpoint
   - https://github.com/kate-goldenring/onvif-camera-mocking (https://github.com/KoynovStas/onvif_srvd/blob/master/src/onvif_srvd.cpp)
   - https://www.happytimesoft.com/products/onvif-server/index.html
+- HLS, RTMP, MPEG

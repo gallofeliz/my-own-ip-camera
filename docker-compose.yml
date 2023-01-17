@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile-main
+      dockerfile: Dockerfile
     network_mode: host
     privileged: true
     tmpfs: /dev/shm:exec
@@ -15,18 +15,6 @@ services:
       - /proc/sysrq-trigger:/sysrq
       - /sys/class/leds/led0/brightness:/sys/class/leds/led0/brightness
       - /sys/class/leds/led1/brightness:/sys/class/leds/led1/brightness
-  rtsp:
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile-rtsp
-    #user: nobody
-    network_mode: host
-    privileged: true
-    tmpfs: /dev/shm:exec
-    volumes:
-      - /run/udev:/run/udev:ro
-      - ./rtsp-simple-server.yml:/rtsp-simple-server.yml:ro
 
 volumes:
   cam:
