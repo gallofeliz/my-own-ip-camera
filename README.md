@@ -1,5 +1,7 @@
 # My Own IP Camera
 
+Abandoned. I have no time and it does not worth it for me.
+
 ## *Infos*
 
 I had a lot of problems after adding rotation that needs post-processing. This feature is important for me, so I will adapt all the stack for that, and thanks to post processing, I also can add timestamp text in video.
